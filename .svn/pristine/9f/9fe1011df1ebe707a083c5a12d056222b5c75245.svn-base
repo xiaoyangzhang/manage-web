@@ -1,0 +1,17 @@
+package com.yhyt.health.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.yhyt.health.model.PatientComplaint;
+
+//投诉管理
+@Controller
+@RequestMapping("complaintPage")
+public class ComplaintController {
+
+	@RequestMapping("/complaint")
+	public String complaintList(PatientComplaint complaint){
+		return "/complaint/complaintList";
+	}
+}

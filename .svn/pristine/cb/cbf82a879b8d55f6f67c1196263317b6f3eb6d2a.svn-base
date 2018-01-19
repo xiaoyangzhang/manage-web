@@ -1,0 +1,20 @@
+package com.yhyt.health.controller;
+
+import com.yhyt.health.model.DictCity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/cityPage")
+public class DictCityWebController {
+
+	@RequestMapping("/city")
+	public String dictCityList(DictCity dictCity){
+		return "/city/dictCityList";
+	}
+
+	@RequestMapping("/toAddCity")
+	public String toAddCity(){
+		return "/city/cityForm";
+	}
+}

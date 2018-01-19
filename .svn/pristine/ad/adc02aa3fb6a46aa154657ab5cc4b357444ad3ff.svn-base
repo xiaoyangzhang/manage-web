@@ -1,0 +1,30 @@
+package com.yhyt.health.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+/**
+ * Created by apple on 2017/12/4.
+ */
+@Controller
+@RequestMapping("/publish")
+public class PublishController {
+    /*创建新内容*/
+    @RequestMapping("/addContent")
+    public String addContent(){
+        return "/publish/addContent";
+    }
+
+    /*医师培训*/
+    @RequestMapping("/toPhysicianList")
+    public String toPhysicianList(){
+        return "/publish/physician-list";
+    }
+
+    /*参与课题*/
+    @RequestMapping("/toTopicList")
+    public String toTopicList(){
+        return "/publish/topic-list";
+    }
+
+}

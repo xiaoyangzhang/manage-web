@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.yhyt.health:dic-client:1.0.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/yhyt/health/dic-client/1.0.0-SNAPSHOT/dic-client-1.0.0-20180108.063031-19.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/yhyt/health/dic-client/1.0.0-SNAPSHOT/dic-client-1.0.0-20180108.063031-19-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/yhyt/health/dic-client/1.0.0-SNAPSHOT/dic-client-1.0.0-20180108.063031-19-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

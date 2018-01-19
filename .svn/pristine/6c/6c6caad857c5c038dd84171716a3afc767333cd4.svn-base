@@ -1,0 +1,38 @@
+package com.yhyt.health.interceptor;
+
+import com.yhyt.health.constant.RequestPath;
+import com.yhyt.health.util.DoctorConstant;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+
+public class ResponseInterceptor implements HandlerInterceptor{
+    @Autowired
+    private DoctorConstant doctorConstant;
+    @Override
+    public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
+    	try {
+			httpServletRequest.setAttribute("imgUrl",doctorConstant.getFdfs().get("url"));
+			httpServletRequest.setAttribute("gateWay", RequestPath.GATEWAY_URI);
+//			httpServletRequest.getSession().setAttribute("imgUrl",doctorConstant.getFdfs().get("url"));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception {
+        
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception {
+
+    }
+}

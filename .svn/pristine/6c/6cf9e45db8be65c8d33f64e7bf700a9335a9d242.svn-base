@@ -1,0 +1,62 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+         pageEncoding="UTF-8" %>
+<%
+String staticPath=request.getContextPath();
+%>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>随访问卷预览页面</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="<%=staticPath%>/static/css/global.css" />
+    <link rel="stylesheet" href="<%=staticPath%>/static/css/H5.css" />
+</head>
+<body>
+<div class="phone">
+    <div class="content">
+        <header class="iphone-bar">
+            <h1 class="title">胃食管反流病量表</h1>
+        </header>
+        <div class="iphone-iframe-wrapper">
+            <div class="question-item">
+                <p class="question-title">1.您手术之后是否出现过以下症状</p>
+                <ul>
+                    <li>A.头晕</li>
+                    <li>B.恶心</li>
+                    <li>C.呕吐</li>
+                </ul>
+            </div>
+            <div class="question-item">
+                <p class="question-title">2.您手术之后是否出现过以下症状 <span>(可多选)</span></p>
+                <ul>
+                    <li>A.头晕</li>
+                    <li>B.恶心</li>
+                    <li>C.呕吐</li>
+                </ul>
+            </div>
+            <div class="question-item">
+                <p class="question-title">3.您目前在服用何种药物</p>
+                <textarea name="" id="" cols="30" rows="10"></textarea>
+            </div>
+            <div class="question-item">
+                <p class="question-title">4.您目前感觉到的疼痛程度为?</p>
+                <input type="range">
+                <div class="range-text"><span style="float: left">轻度</span><span style="float: right">重度</span></div>
+            </div>
+            <div class="question-item">
+                <p class="question-title">5.请上传您近期的CT检查报告</p>
+                <div class="upload">
+                    <input type="file" class="btn"></input>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="statusbar"></div>
+</div>
+</body>
+</html>

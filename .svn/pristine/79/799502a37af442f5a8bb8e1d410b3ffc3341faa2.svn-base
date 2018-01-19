@@ -1,0 +1,187 @@
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%
+ String contextPath = request.getContextPath();
+String servicePath = contextPath+"/system";
+%>
+<!DOCTYPE html>
+<title>科室分类库</title>
+<html>
+<%@include file="../top.jsp"%>
+<body>
+	<div style="background-color: white; margin:0;">
+		<blockquote class="layui-elem-quote">
+			<a href="javascript:;" class="layui-btn" id="addDictDepartment">
+				<i class="layui-icon">&#xe608;</i> 添加分类
+			</a>
+		</blockquote>
+		<div class="layui-form" id="content"></div>
+	</div>
+	<script>
+			layui.config({
+				base: '<%=contextPath%>/static/js/'
+			});
+
+			layui.use(['btable','jquery','form'], function() {
+				var $ = layui.jquery,
+					btable = layui.btable(),
+					layerTips = parent.layer === undefined ? layui.layer : parent.layer, //获取父窗口的layer对象
+					layer = layui.layer, //获取当前窗口的layer对象
+					form = layui.form();
+
+				var del = function(id,tr){
+					$.ajax({
+		                type: "POST",
+		                url: "<%=servicePath%>/dictDepartment/delete/"+id,
+		                success: function (obj) {
+		                    if(obj.msg){
+		                    	layer.alert(data.msg);
+		                    	return false;
+		                    }else{
+		                    	tr.remove();
+                                layerTips.msg('删除成功.');
+		                    }
+		                },
+		                error: function(data) {
+		                	layer.alert(data.msg);
+		                	return false;
+		                }
+		            });
+				};
+				
+				var addBoxIndex = -1;
+				var con = '<div style="margin: 15px;"><div class="layui-form" id="dictDepartmentForm"><input type="hidden" name="id" id="dictDepartmentId"  /><div class="layui-form-item"><label class="layui-form-label">父编码:</label><div class="layui-input-block"><input type="text" name="parentCode" class="layui-input"></div></div>' +
+                '<div class="layui-form-item"><label class="layui-form-label">父名称:</label><div class="layui-input-block"><input type="text" name="parentName"  class="layui-input"></div></div>' +
+                '<div class="layui-form-item"><label class="layui-form-label">子编码:</label><div class="layui-input-block"><input type="text" name="childCode"  class="layui-input"></div></div>'+
+                '<div class="layui-form-item"><label class="layui-form-label">子名称:</label><div class="layui-input-block"><input type="text" name="childName" class="layui-input"></div></div></div></div>';
+				var onEdit = function(title,id){
+					//本表单通过ajax加载 --以模板的形式，当然你也可以直接写在页面上读取
+					if(addBoxIndex !== -1)
+							return;
+	                layer.open({
+	                    type: 1,
+	                    title: title,
+	                    content: con,
+	                    btn: ['确定', '取消'],
+	                    area: ['380px', '420px'],
+	                    yes: function (index, layero) {
+	                        //这是核心的代码。
+	                        $.ajax({
+	                			type : "POST",
+	                			url : "<%=contextPath%>/dictDepartment/edit",
+	                			data : {id:id,parentCode: $(layero).find('input[name=parentCode]').val(), //地址
+	                				parentName: $(layero).find('input[name=parentName]').val(),
+	                				childCode: $(layero).find('input[name=childCode]').val(),
+	                				childName: $(layero).find('input[name=childName]').val()},
+	                			dataType : 'json',
+	                			success : function(result, status, xhr) {
+	                				btable.get();
+	                				layer.close(index);
+	                			},
+	                			error : function(res) {
+	                				layer.msg(res.msg, { icon: 2 });
+	                			}
+	                		});
+	                    },
+	                    success: function(layero, index) {
+							var form = layui.form();
+							form.render();
+							var layer = layui.layer;
+							if(id!=null){
+								$.ajax({
+					                type: "GET",
+					                url: "<%=servicePath%>/dictDepartment/"+id,
+					                success: function (obj) {
+					                    if(obj.msg){
+					                    	layer.alert(data.msg);
+					                    	layer.close(index);
+					                    }else{
+					                    	 $("#dictDepartmentForm").find('input[name=parentCode]').val(obj.parentCode);
+					                    	 $("#dictDepartmentForm").find('input[name=parentName]').val(obj.parentName);
+					                    	 $("#dictDepartmentForm").find('input[name=childCode]').val(obj.childCode);
+					                    	 $("#dictDepartmentForm").find('input[name=childName]').val(obj.childName);
+					                    }
+					                },
+					                error: function(data) {
+					                	layer.alert(data.msg);
+					                	layer.close(index);
+					                }
+					            });
+							};
+	                    },
+	                    shade: false,
+	                    maxmin: true
+	                });
+				}
+				
+				btable.set({
+                    openWait: true,
+                    url: '<%=servicePath%>/dictDepartment/', //地址
+                    paged:false,
+					elem: '#content', //内容容器
+					params: { //发送到服务端的参数
+					},
+					even: true,//隔行变色
+			        field: 'id', //主键ID
+			        checkbox: false,//是否显示多选框
+					type: 'GET',
+					columns:[{
+		                fieldName:'父编码',
+		                field:'parentCode'
+		            },{
+		                fieldName:'父名称',
+		                field:'parentName'
+		            },{
+		                fieldName:'子编码',
+		                field:'childCode'
+		            },{
+		                fieldName:'子名称',
+		                field:'childName'
+		            }, {
+		                fieldName: '操作',
+		                field: 'id',
+		                format: function (val,obj) {
+		                    var html = '<input type="button" value="编辑" data-action="edit" data-id="' + val + '" class="layui-btn layui-btn-mini" /> ' +
+		                    '<input type="button" value="删除" data-action="del" data-id="' + val + '" class="layui-btn layui-btn-mini layui-btn-danger" />'
+		                    return html;
+		                }
+		            }],
+		            onSuccess: function ($elem) { //$elem当前窗口的jq对象
+	                    $elem.children('tr').each(function () {
+	                        $(this).children('td:last-child').children('input').each(function () {
+	                            var $that = $(this);
+	                            var action = $that.data('action');
+	                            var id = $that.data('id');
+	                            $that.on('click', function () {
+	                                switch (action) {
+	                                    case 'edit':
+	                                        onEdit("编辑",id)
+	                                        break;
+	                                    case 'del': //删除
+	                                        var name = $that.parent('td').siblings('td[data-field=childName]').text();
+	                                        //询问框
+	                                        layerTips.confirm('确定要删除[ <span style="color:red;">' + name + '</span> ] ？', { icon: 3, title: '系统提示' }, function (index) {
+	                                            del(id,$that.parent('td').parent('tr'));
+	                                        });
+	                                        break;
+	                                }
+	                            });
+	                        });
+	                    });
+	                },
+					fail: function(msg) { //获取数据失败的回调
+						layer.msg(res.msg, { icon: 2 });
+					},
+					complate: function() { //完成的回调
+					},
+				});
+				btable.render();
+	            //这个是点击之后才添加的。
+	            $('#addDictDepartment').on('click', function () {
+	            	onEdit("添加",null);
+	            });
+			});
+		</script>
+</body>
+
+</html>

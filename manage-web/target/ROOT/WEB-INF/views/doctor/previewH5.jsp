@@ -1,0 +1,114 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+         pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<%
+    String staticPath = request.getContextPath();
+%>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>随访问卷预览页面</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="<%=staticPath%>/static/css/global.css"/>
+    <link rel="stylesheet" href="<%=staticPath%>/static/css/H5.css"/>
+</head>
+<body>
+<div class="phone">
+    <div class="content">
+        <header class="iphone-bar">
+            <h1 class="title">${questionnaire.title}</h1>
+        </header>
+        <div class="iphone-iframe-wrapper">
+            <div class="endText">
+                <p>${questionnaire.subTitle}</p>
+            </div>
+            <c:forEach items="${questionnaireItems}" var="item" varStatus="status">
+                <%--单选--%>
+                <c:if test="${item.type==1}">
+                    <div class="question-item">
+                        <p class="question-title">${status.index+1}.${item.title}<span>(单选)</span></p>
+                        <ul>
+                            <c:if test="${!empty item.answerA}">
+                                <li>A.${item.answerA}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerB}">
+                                <li>B.${item.answerB}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerC}">
+                                <li>C.${item.answerC}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerD}">
+                                <li>D.${item.answerD}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerE}">
+                                <li>E.${item.answerE}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerF}">
+                                <li>F.${item.answerF}</li>
+                            </c:if>
+                        </ul>
+                    </div>
+                </c:if>
+                <c:if test="${item.type==2}">
+                    <div class="question-item">
+                        <p class="question-title">${status.index+1}.${item.title}<span>(可多选)</span></p>
+                        <ul>
+                            <c:if test="${!empty item.answerA}">
+                                <li>A.${item.answerA}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerB}">
+                                <li>B.${item.answerB}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerC}">
+                                <li>C.${item.answerC}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerD}">
+                                <li>D.${item.answerD}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerE}">
+                                <li>E.${item.answerE}</li>
+                            </c:if>
+                            <c:if test="${!empty item.answerF}">
+                                <li>F.${item.answerF}</li>
+                            </c:if>
+                        </ul>
+                    </div>
+                </c:if>
+                <c:if test="${item.type==3}">
+                    <div class="question-item">
+                        <p class="question-title">${status.index+1}.${item.title}<span>(简答)</span></p>
+                        <textarea name="" id="" cols="30" rows="10"></textarea>
+                    </div>
+                </c:if>
+                <c:if test="${item.type==4}">
+                    <div class="question-item">
+                        <p class="question-title">${status.index+1}.${item.title}</p>
+                        <input type="range" min="0" max="10" value="0">
+                        <div class="range-text"><span style="float: left">${item.minDescription}</span><span
+                                style="float: right">${item.maxDescription}</span></div>
+                    </div>
+                </c:if>
+                <c:if test="${item.type==5}">
+                    <div class="question-item">
+                        <p class="question-title">${status.index+1}.${item.title}</p>
+                        <div class="upload">
+                            <input type="file" class="btn"/>
+                        </div>
+                    </div>
+                </c:if>
+            </c:forEach>
+            <div class="endText">
+                <p>${questionnaire.comment}</p>
+            </div>
+        </div>
+    </div>
+    <div class="statusbar"></div>
+</div>
+</body>
+</html>

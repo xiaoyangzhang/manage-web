@@ -1,0 +1,29 @@
+package com.yhyt.health.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+/**
+ * Created by localadmin on 17/12/4.
+ */
+@Controller
+@RequestMapping("/register")
+public class RegisterController {
+
+
+    /*产科患者列表*/
+    @RequestMapping("/toRegisterList")
+    public String toRegisterList(){
+        return "/register/register-list";
+    }
+
+
+    /*产科患者详情*/
+    @RequestMapping("/toRegisterDetail")
+    public String toRegisterDetail(){
+        return "/register/register-details";
+    }
+
+}
+
+

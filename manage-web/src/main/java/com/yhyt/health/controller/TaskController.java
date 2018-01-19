@@ -1,0 +1,40 @@
+//package com.yhyt.health.controller;
+//
+//import com.yhyt.health.configuration.WebPathConfiguration;
+//import com.yhyt.health.model.SysMessage;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.stereotype.Controller;
+//import org.springframework.ui.Model;
+//import org.springframework.web.bind.annotation.RequestMapping;
+//import org.springframework.web.client.RestTemplate;
+//import org.springframework.web.servlet.ModelAndView;
+//
+//import java.util.List;
+//
+///**
+// * Created by localadmin on 17/12/28.
+// */
+//@Controller
+//@RequestMapping("/task")
+//public class TaskController {
+//    private static Logger logger = LoggerFactory.getLogger(TaskController.class);
+//
+//
+//    @RequestMapping("/toTaskList")
+//    public String toTaskListPage() {
+//        return "/task/task-list";
+//    }
+//
+//    /*任务订单  详情*/
+//    @RequestMapping("/toTaskDetails")
+//    public String toTaskDetails(){
+//        return "/task/task-details";
+//    }
+//
+//    @RequestMapping("/messagetask/form")
+//    public String toMessageTask(){
+//        return "/task/messageTask";
+//    }
+//}

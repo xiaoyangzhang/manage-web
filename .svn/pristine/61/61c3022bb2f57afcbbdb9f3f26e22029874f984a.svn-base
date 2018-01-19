@@ -1,0 +1,468 @@
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%
+	String contextPath = request.getContextPath();
+%>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>任务订单详情</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" href="<%=contextPath%>/static/plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="<%=contextPath%>/static/plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="<%=contextPath%>/static/css/btable.css" />
+	<script src="http://libs.baidu.com/jquery/2.1.4/jquery.min.js"></script>
+	<script type="text/javascript" src="<%=contextPath%>/static/js/jquery.tmpl.min.js"></script>
+	<style>
+		.progressText{width: 80%;  height: 40px;  position: relative; }
+		.progressText span{font-size: 14px;color: #000;position: absolute;top:0;margin-left: -10px;}
+		.progressText span:nth-child(1){left: 0;}
+		.progressText span:nth-child(2){left: 25%;}
+		.progressText span:nth-child(3){left: 50%;}
+		.progressText span:nth-child(4){left: 75%;}
+		.progressText span:nth-child(5){right: -4%;}
+		#progressBar{  width: 80%;  height: 40px;  position: relative;  margin: 10px 0 0 20px;  }
+		#progressBar div{  width: 100%;  height: 5px;  position: absolute;  top:50%;  left: 0;  margin-top:-12px;  background: #ccc;  }
+		#progressBar div span{  position: absolute;  display: inline-block;  background: #48bc61;  height: 5px;  width: 100%;  -webkit-animation:bgLoad 1.8s linear;  }
+		@-webkit-keyframes bgLoad{
+			0%{
+				width: 0%;
+			}
+			18.18%,27.27%{
+				width:25%;
+			}
+			45.45%,54.54%{
+				width: 50%;
+			}
+			72.72%,81.81%{
+				width: 75%;
+			}
+			100%{
+				width:100%;
+			}
+		}
+		#progressBar>span{  position: absolute;  top:0;  margin-top: -10px;  width: 40px;  height: 40px;  border-radius: 50%;  background: #ccc;  margin-left: -20px;  color:#fff;  }
+		#progressBar>span i {line-height: 40px;  width: 40px;  text-align: center;  padding: 0;  font-size: 24px;  }
+		@-webkit-keyframes circleLoad_1{
+			0%,66.66%{
+				background: #ccc;
+			}
+			100%{
+				background:#48bc61;
+			}
+		}
+		@-webkit-keyframes circleLoad_2{
+			0%,83.34%{
+				background: #ccc;
+			}
+			100%{
+				background:#48bc61;
+			}
+		}
+		@-webkit-keyframes circleLoad_3{
+			0%,88.88%{
+				background: #ccc;
+			}
+			100%{
+				background:#48bc61;
+			}
+		}
+		@-webkit-keyframes circleLoad_4{
+			0%,91.67%{
+				background: #ccc;
+			}
+			100%{
+				background:#48bc61;
+			}
+		}
+		#progressBar span:nth-child(2){
+			left: 0%;background:#f8663e;
+		}
+		#progressBar span:nth-child(3){
+			left: 25%;background:#48bc61;
+			-webkit-animation:circleLoad_1 0.5s ease-in;
+		}
+		#progressBar span:nth-child(4){
+			left: 50%;background:#48bc61;
+			-webkit-animation:circleLoad_2 1s ease-in;
+		}
+		#progressBar span:nth-child(5){
+			left: 75%;background:#48bc61;
+			-webkit-animation:circleLoad_3 1.5s ease-in;
+		}
+		#progressBar span:nth-child(6){
+			left: 100%;background:#4f9fea;
+			-webkit-animation:circleLoad_4 2s ease-in;
+		}
+	</style>
+</head>
+<body>
+<blockquote class="layui-elem-quote" style="padding: 10px 15px;line-height: 30px;">当前位置:任务订单详情<a href="javascript:history.back(-1);" style="float: right;height: 30px;line-height: 30px;" class="layui-btn layui-btn-normal">返回</a></blockquote>
+<div class="layui-whole">
+	<div class="layui-whole-con" style="padding: 0px 15px;">
+		<input type="hidden" value="${id}" id="taskId" />
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>订单信息</h2>
+		<table class="layui-table" style="margin:0 0 10px 0;">
+			<colgroup>
+				<col width="100px">
+				<col>
+				<col width="100px">
+				<col>
+				<col width="100px">
+				<col>
+				<col width="100px">
+				<col>
+			</colgroup>
+			<tbody>
+			<tr>
+				<td>订单编号</td>
+				<td>${detail.orderNo}</td>
+				<td>订单名称</td>
+				<td>${detail.name}</td>
+				<td>医院</td>
+				<td>${detail.hospital}</td>
+			</tr>
+			<tr>
+				<td>科室</td>
+				<td>${detail.department}</td>
+				<td>订单状态</td>
+				<td>
+					<c:if test="${detail.orderState==1}">未支付</c:if>
+					<c:if test="${detail.orderState==2}">已支付</c:if>
+					<c:if test="${detail.orderState==3}">失效</c:if>
+					<c:if test="${detail.orderState==4}">退款成功</c:if>
+					<c:if test="${detail.orderState==6}">退款失败</c:if>
+					<c:if test="${detail.orderState==7}">申请退款</c:if>
+				</td>
+				<td>医生状态</td>
+				<td>
+					<c:if test="${detail.doctorState==1}">待处理</c:if>
+					<c:if test="${detail.doctorState==2}">已接受</c:if>
+					<c:if test="${detail.doctorState==3}">已完成</c:if>
+					<c:if test="${detail.doctorState==4}">已拒绝</c:if>
+				</td>
+			<tr>
+				<td>付款时间</td>
+				<td><fmt:formatDate value="${detail.payTime}" pattern="yyyy-MM-dd" type="date"/></td>
+				<td>退款时间</td>
+				<td><fmt:formatDate value="${detail.refundTime}" pattern="yyyy-MM-dd" type="date"/></td>
+			</tr>
+			</tbody>
+		</table>
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>服务流程</h2>
+		<div style="padding: 10px 20px;">
+			<div id="progressBar">
+				<!-- 进度条 -->
+				<div>
+					<span></span>
+				</div>
+				<!-- 五个圆 -->
+				<span><i class="fa fa-jpy"></i></span>
+				<span><i class="fa fa-tty"></i></span>
+				<span><i class="fa fa-user-md"></i></span>
+				<span><i class="fa fa-hospital-o"></i></span>
+				<span><i class="fa fa-power-off"></i></span>
+			</div>
+			<div class="progressText">
+				<span>支付完成</span>
+				<span>客服任务</span>
+				<span>医生确认</span>
+				<span>医院就诊</span>
+				<span>结束</span>
+			</div>
+		</div>
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>患者基本信息</h2>
+		<table class="layui-table" style="margin:0 0 10px 0;">
+			<colgroup>
+				<col width="110px">
+				<col>
+				<col width="110px">
+				<col>
+				<col width="110px">
+				<col>
+				<col width="110px">
+				<col>
+				<col width="110px">
+				<col>
+			</colgroup>
+			<tbody>
+			<tr>
+				<td>用户名</td>
+				<td>${detail.patientUserName}</td>
+				<td>姓名</td>
+				<td>${detail.patientRealName}</td>
+				<td>性别</td>
+				<td>
+					<c:if test="${detail.sex==1}">男</c:if>
+					<c:if test="${detail.sex==2}">女</c:if>
+
+				</td>
+				<td>手机号</td>
+				<td>${detail.mobile}</td>
+				<td>身份证号</td>
+				<td>${detail.cardNo}</td>
+			</tr>
+			</tbody>
+		</table>
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>患者病情信息</h2>
+		<div style="padding: 10px 0;">
+			<p>${patientCasearchives.diseasedescription}</p>
+			<div id="layer-photos-img" class="layer-photos-demo">
+				<c:forEach items="${pics}" var="picUrlsImg">
+					<img layer-pid="" layer-src="${picUrlsImg.picUrls}" src="${picUrlsImg.picUrls}" alt="" style="width: 150px;height: 150px;">
+				</c:forEach>
+			</div>
+		</div>
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>任务信息</h2>
+		<div style="padding: 10px 0;">
+			<p>任务说明: <span style="color: #f00">开启任务之前请与患者确认病情信息以及服务进程，与合作科室沟通启动任务；</span></p>
+		</div>
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>订单操作</h2>
+		<div style="padding: 10px 0;">
+			<a href="javascript:" itemid="${id}" class="layui-btn layui-btn-normal" id="back">退单</a>
+			<a href="javascript:" itemid="${id}" class="layui-btn layui-btn-normal" id="send">提醒用户</a>
+			<a href="javascript:" itemid="${id}" class="layui-btn layui-btn-normal" id="adopt">审核通过，递交医生</a>
+		</div>
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>任务操作</h2>
+		<div style="padding: 10px 0;">
+			<a href="javascript:" itemid="${id}" class="layui-btn layui-btn-normal" id="end">结束任务</a>
+		</div>
+		<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>操作记录</h2>
+		<table class="layui-table" style="margin:0 0 10px 0;">
+			<colgroup>
+				<col width="150px">
+				<col width="150px">
+				<col>
+			</colgroup>
+			<thead>
+			<tr>
+				<th style="text-align: center">时间</th>
+				<th style="text-align: center">操作人</th>
+				<th style="text-align: center">描述</th>
+			</tr>
+			</thead>
+			<tbody>
+			<c:forEach items="${taskLogs}" var="item">
+				<tr>
+					<td><fmt:formatDate value="${item.createTime }" pattern="yyyy-MM-dd HH:mm" type="date"/></td>
+					<td style="text-align: center">${item.operator}</td>
+					<td style="text-align: center">
+						<c:if test="${item.type==1}">提醒用户：</c:if>
+						<c:if test="${item.type==2}">退单：</c:if>
+						<c:if test="${item.type==3}">提交医生：</c:if>
+						<c:if test="${item.type==6}">任务结束：</c:if>
+					${item.content}
+					</td>
+				</tr>
+			</c:forEach>
+			</tbody>
+		</table>
+	</div>
+</div>
+<script  src="<%=contextPath%>/static/plugins/layui/layui.js"></script>
+<script>
+	layui.config({
+		base:'<%=contextPath%>/static/js/'
+	}).use(['form', 'layedit', 'laydate'], function () {
+		var laydate = layui.laydate,
+			layerTips = parent.layer === undefined ? layui.layer : parent.layer, //获取父窗口的layer对象
+			layer = layui.layer, //获取当前窗口的layer对象
+			form = layui.form();
+
+		$('#back').on('click', function () {
+			var con = '<div style="padding:10px;"><textarea placeholder="请输入内容" class="layui-textarea"></textarea></div>';
+			layer.open({
+				type: 1,
+				title: '退款原因',
+				content: con,
+				btn: ['保存', '取消'],
+				area: ['350px', '250px'],
+				yes: function (index, layero) {
+					//这是核心的代码。
+					var params = {};
+					var reason = $(layero).find('textarea').val();
+					if(reason.trim().length<5){
+						layerTips.msg("内容请输入至少5个字符！",{icon:5});
+						return;
+					}else if(reason.trim().length>300){
+						layerTips.msg("内容不能多于300个字符！",{icon:5});
+						return;
+					}
+					params["reason"] = reason;
+					$.ajax({
+						type: "get",
+						url: '<%=contextPath%>/task/state/update',
+						data: {
+							id:$("#taskId").val(),
+							state:5,
+							content:reason,
+							action:"refund"
+						},
+						async: true,
+						dataType: "json",
+						success: function (data) {
+							if (data.code == "200") {
+								layerTips.msg("退单成功！",{icon:1});
+								location.reload();
+							}else {
+								layerTips.msg("退单失败！",{icon:2});
+							}
+						},
+						error: function (data) {
+							layerTips.msg('退单失败',{icon:2});
+						}
+					});
+				},
+				shade: [0.8, '#393D49'],
+				maxmin: true,
+				offset: '100px'
+			});
+		});
+
+
+		$('#adopt').on('click', function () {
+			var con = '<div style="padding:10px;"><textarea placeholder="请输入内容" class="layui-textarea"></textarea></div>';
+			layer.open({
+				type: 1,
+				title: '审核通过，递交医生原因',
+				content: con,
+				btn: ['保存', '取消'],
+				area: ['350px', '250px'],
+				yes: function (index, layero) {
+					//这是核心的代码。
+					var params = {};
+					var reason = $(layero).find('textarea').val();
+					if(reason.trim().length<5){
+						layerTips.msg("内容请输入至少5个字符！",{icon:5});
+						return;
+					}else if(reason.trim().length>300){
+						layerTips.msg("内容不能多于300个字符！",{icon:5});
+						return;
+					}
+					params["reason"] = reason;
+					$.ajax({
+						type: "get",
+						url: '<%=contextPath%>/task/state/update',
+						data: {
+							id:$("#taskId").val(),
+							state:2,
+							content:reason,
+							action:"submit"
+						},
+						async: true,
+						dataType: "json",
+						success: function (data) {
+							if (data.code == "200") {
+								layerTips.msg("提交医生成功！",{icon:1});
+								location.reload();
+							}else {
+								layerTips.msg("提交医生失败！",{icon:2});
+							}
+						},
+						error: function (data) {
+							layerTips.msg('提交医生失败',{icon:2});
+						}
+					});
+				},
+				shade: [0.8, '#393D49'],
+				maxmin: true,
+				offset: '100px'
+			});
+		});
+
+
+		$('#end').on('click', function () {
+			var con = '<div style="padding:10px;"><textarea placeholder="请输入内容" class="layui-textarea"></textarea></div>';
+			layer.open({
+				type: 1,
+				title: '结束任务描述',
+				content: con,
+				btn: ['保存', '取消'],
+				area: ['350px', '250px'],
+				yes: function (index, layero) {
+					//这是核心的代码。
+					var params = {};
+					var reason = $(layero).find('textarea').val();
+					if(reason.trim().length<5){
+						layerTips.msg("内容请输入至少5个字符！",{icon:5});
+						return;
+					}else if(reason.trim().length>300){
+						layerTips.msg("内容不能多于300个字符！",{icon:5});
+						return;
+					}
+					params["reason"] = reason;
+					$.ajax({
+						type: "get",
+						url: '<%=contextPath%>/task/state/update',
+						data: {
+							id:$("#taskId").val(),
+							state:4,
+							content:reason,
+							action:"end"
+						},
+						async: true,
+						dataType: "json",
+						success: function (data) {
+							if (data.code == "200") {
+								layerTips.msg("任务结束成功！",{icon:1});
+								location.reload();
+							}else {
+								layerTips.msg("任务结束失败！",{icon:2});
+							}
+						},
+						error: function (data) {
+							layerTips.msg('任务结束失败',{icon:2});
+						}
+					});
+				},
+				shade: [0.8, '#393D49'],
+				maxmin: true,
+				offset: '100px'
+			});
+		});
+
+
+
+		$('#send').on('click', function () {
+			var endIndex = {};
+			endIndex["taskId"] = $("#taskId").val();
+			layer.open({
+				type: 2,
+				title: "用户提醒",
+				content: '<%=contextPath%>/task/messagetask/form/${detail.patientId}',
+				btn: ['确定', '取消'],
+				offset: '50px',
+				area: ['600px', '440px'],
+				zIndex: 2017,
+				maxmin: true,
+				shade: [0.8, '#393D49'],
+				yes: function(index) {
+					//触发表单的提交事件
+					var body = layer.getChildFrame('body', index);
+					body.find('button[lay-filter=messageTaskSubmit]').click();
+				},
+				success: function(layero, index) {
+
+				}
+			});
+		});
+
+		layerTips.photos({
+			photos: '#layer-photos-img',
+			offset: '100px',
+			full: true,
+			anim: 5 //0-6的选择，指定弹出图片动画类型，默认随机（请注意，3.0之前的版本用shift参数）
+		});
+
+
+	});
+</script>
+</body>
+</html>

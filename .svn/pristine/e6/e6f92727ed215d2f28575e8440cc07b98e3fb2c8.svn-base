@@ -1,0 +1,656 @@
+package com.yhyt.health.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.github.pagehelper.PageInfo;
+import com.yhyt.health.constant.DictConstant;
+import com.yhyt.health.constant.RequestPath;
+import com.yhyt.health.model.Doctor;
+import com.yhyt.health.model.DoctorDisease;
+import com.yhyt.health.model.DoctorReview;
+import com.yhyt.health.model.dto.SysBlacklistDTO;
+import com.yhyt.health.model.query.*;
+import com.yhyt.health.model.vo.*;
+import com.yhyt.health.result.WebResult;
+import com.yhyt.health.service.SysUserService;
+import com.yhyt.health.util.WebUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.ServletRequestDataBinder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import javax.servlet.http.HttpServletRequest;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+@Controller
+@RequestMapping("/doctor")
+public class DoctorController {
+    private static Logger logger = LoggerFactory.getLogger(DoctorController.class);
+
+    @RequestMapping("/test")
+    @ResponseBody
+    public String testApp() {
+        return "hello world!!!";
+    }
+
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private SysUserService sysUserService;
+    @InitBinder
+    protected void initBinder(HttpServletRequest request, ServletRequestDataBinder binder) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        simpleDateFormat.setLenient(false);
+        CustomDateEditor dateEditor = new CustomDateEditor(simpleDateFormat, true);
+        binder.registerCustomEditor(Date.class,dateEditor);
+    }
+
+    @RequestMapping(value = "/toDoctorList",method = RequestMethod.GET)
+    public String toDoctorList() {
+        return "/doctor/doctor-list";
+    }
+    @RequestMapping(value = "/doctorList",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<DoctorVO> queryDoctorList(/*@RequestBody*/ DoctorQuery doctorQuery) {
+        WebResult<DoctorVO> result = new WebResult<>();
+        PageInfo doctors = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/doctorList?doctorQueryStr={doctorQueryStr}", PageInfo.class,JSON.toJSONString(doctorQuery));
+        result.setCount(doctors.getTotal());
+        result.setList(doctors.getList());
+//        return JSON.toJSONString(result);
+        return result;
+    }
+
+    @RequestMapping(value = "/editDoctor",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> editDoctor(@RequestBody Doctor doctor,HttpServletRequest request) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            Long currUserId = WebUtils.getCurrUserId(request);
+            restTemplate.put(RequestPath.DOCTOR_URI+"/updateDoctor?params={params}",null,JSON.toJSONString(doctor));
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+
+        return result;
+    }
+    @RequestMapping("/doctor/{id}")
+    public String queryDoctorById(@PathVariable("id") long id,Model model) {
+        DoctorVO doctor = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/toEditDoctor/"+id, DoctorVO.class);
+        model.addAttribute("doctorVO",doctor);
+        List titles = restTemplate.getForObject(RequestPath.SYSTEM_URI+"/dictionary/?dictCode="+ DictConstant.TITLE, List.class);
+        model.addAttribute("titles",titles);
+        List duties = restTemplate.getForObject(RequestPath.SYSTEM_URI+"/dictionary/?dictCode="+DictConstant.DUTY, List.class);
+        model.addAttribute("duties",duties);
+        List educations = restTemplate.getForObject(RequestPath.SYSTEM_URI+"/dictionary/?dictCode="+DictConstant.EDUCATION, List.class);
+        //TODO 查询职称、职务、学历
+        model.addAttribute("educations",educations);
+        return "/doctor/doctor-edit";
+    }
+    @RequestMapping("/toDoctorInfo/{id}")
+    public String toDoctorInfo(Model model,@PathVariable("id")long id) {
+        model.addAttribute("id",id);
+        return "/doctor/doctor-basic-info";
+    }
+
+
+    @RequestMapping(value = "/doctorinfo/{id}",method = RequestMethod.GET)
+    @ResponseBody
+    public WebResult<DoctorVO> getDoctorBasicInfo(@PathVariable("id") Long id) {
+        WebResult<DoctorVO> result = new WebResult<>();
+        DoctorVO doctorVO = null;
+        try {
+            doctorVO = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/toEditDoctor/" + id, DoctorVO.class);
+            //查询黑名单和反馈
+            List blacklist = restTemplate.getForObject(RequestPath.SYSTEM_URI+"/getBlackList/" + id + "/"+2, List.class);
+            if (!CollectionUtils.isEmpty(blacklist)) {
+
+                doctorVO.setBlacklistList(blacklist);
+            }
+            List feedbacklist = restTemplate.getForObject(RequestPath.SYSTEM_URI + "/sysfeedback/feedbackList/query/" + id + "/" + 2, List.class);
+            if (!CollectionUtils.isEmpty(blacklist)) {
+
+                doctorVO.setFeedbackList(feedbacklist);
+            }
+            result.setEntity(doctorVO);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+
+        return result;
+    }
+
+    @RequestMapping("/extDoctorinfo/{id}")
+    @ResponseBody
+    public WebResult<DoctorVO> getExtDoctorInfo(@PathVariable("id")long id) {
+        WebResult<DoctorVO> result = new WebResult<>();
+        DoctorVO doctorVO = null;
+        try {
+            doctorVO = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/toEditDoctor/" + id, DoctorVO.class);
+            result.setEntity(doctorVO);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+
+        return result;
+    }
+
+
+    @RequestMapping("/toDoctorReviewList")
+    public String toDoctorReviewList() {
+        return "/doctor/doctor-review-list";
+    }
+
+    @RequestMapping(value = "/doctorReviewList",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<DoctorReviewVO> getDoctorReviewListPage( DoctorReviewQuery doctorReviewQuery) {
+        WebResult<DoctorReviewVO> result = new WebResult<>();
+        if (doctorReviewQuery == null) {
+            doctorReviewQuery = new DoctorReviewQuery();
+            doctorReviewQuery.setPageIndex(1);
+            doctorReviewQuery.setPageSize(3);
+        }
+//        doctorReviewQuery.setOperator("李四");
+        PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/doctorReviewList?queryStr={queryStr}" , PageInfo.class, JSON.toJSONString(doctorReviewQuery));
+        result.setCount(pageInfo.getTotal());
+        result.setList(pageInfo.getList());
+        return result;
+    }
+
+    @RequestMapping("/toDoctorReview/{id}")
+    public String toDoctorReview(@PathVariable("id")long id,Model model){
+        model.addAttribute("id",id);
+        return "/doctor/doctor-review";
+    }
+
+    @RequestMapping("/DoctorReviewInfo/{id}")
+    @ResponseBody
+    public WebResult<DoctorReviewVO> DoctorReviewInfo(@PathVariable("id")long id){
+        WebResult<DoctorReviewVO> result = new WebResult<>();
+        try {
+            DoctorReviewVO doctorReviewVO = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/viewDoctorReviewInfo/" + id, DoctorReviewVO.class);
+            result.setEntity(doctorReviewVO);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+    @RequestMapping(value = "/releaseTask",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> releaseTask(String operator) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            Integer integer = restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/releaseTask?operator={operator}", null, Integer.class, operator);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    @RequestMapping(value = "/changeLockStateReview",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> changeLockStateReview(@RequestBody DoctorReview doctorReview) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            doctorReview.setOperator("李四");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<DoctorReview> doctorHttpEntity = new HttpEntity<>(doctorReview, headers);
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            Integer integer = restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/changeLockStateReviewRecord", doctorHttpEntity, Integer.class);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    @RequestMapping(value = "/refuseApply",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> refuseApply(@RequestBody DoctorReview doctorReview){
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            Integer integer = restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/refuseApply?params={params}", null, Integer.class, JSON.toJSONString(doctorReview));
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+    @RequestMapping(value = "/agreeApply/{id}")
+    @ResponseBody
+    public WebResult<String> agreeApply(@PathVariable("id") long id){
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            Integer integer = restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/agreeApply?id={id}", null, Integer.class, id);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+
+    @RequestMapping("/toFamousDoctorList")
+    public String toFamousDoctorList() {
+        return "/disease/famous-doctor-list";
+    }
+
+    @RequestMapping("/famousDoctorList")
+    @ResponseBody
+    public WebResult<DoctorDiseaseVO> getFamousDoctorListPage( DoctorDiseaseQuery doctorDiseaseQuery) {
+        WebResult<DoctorDiseaseVO> result = new WebResult<>();
+        if (doctorDiseaseQuery == null) {
+            doctorDiseaseQuery = new DoctorDiseaseQuery();
+            doctorDiseaseQuery.setPageIndex(1);
+            doctorDiseaseQuery.setPageSize(15);
+        }
+        PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/getDoctorDisease?queryStr={queryStr}", PageInfo.class, JSON.toJSONString(doctorDiseaseQuery));
+        result.setCount(pageInfo.getTotal());
+        result.setList(pageInfo.getList());
+        return result;
+    }
+
+    @RequestMapping("toBlacklist")
+    public String toBlacklist() {
+        return "/doctor/doctor-blacklist";
+    }
+    @RequestMapping("/getBlacklist")
+    @ResponseBody
+    public WebResult<DoctorBlacklistVO> getBlacklistPage( DoctorBlackQuery doctorBlackQuery) {
+        WebResult<DoctorBlacklistVO> result = new WebResult<>();
+        if (doctorBlackQuery == null) {
+            doctorBlackQuery = new DoctorBlackQuery();
+            doctorBlackQuery.setPageIndex(1);
+            doctorBlackQuery.setPageSize(15);
+        }
+        PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/getDoctorBlacklist?queryStr={queryStr}", PageInfo.class, JSON.toJSONString(doctorBlackQuery));
+        result.setCount(pageInfo.getTotal());
+        result.setList(pageInfo.getList());
+        return result;
+    }
+
+    @RequestMapping(value = "/updatePassword",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> updatePassword(@RequestBody Doctor doctor) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            Integer integer = restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/updatePassword?params={params}", null, Integer.class, JSON.toJSONString(doctor));
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+
+    }
+
+    /*@RequestMapping(value = "/addBlackList",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> addBlackList(String params) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            //TODO 服务接口
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            Integer integer = restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/updatePassword?params={params}", null, Integer.class, params);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }*/
+
+    /**
+     * 加入或移除黑名单
+     * @param
+     * @return
+     */
+    @RequestMapping("/blacklist/operate")
+    @ResponseBody
+    public WebResult<String> operateBlacklist(@RequestBody SysBlacklistDTO sysBlacklistDTO){
+        WebResult<String> result = new WebResult<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        sysBlacklistDTO.getSysBlacklist().setOperator("李四");
+        sysBlacklistDTO.getSysBlacklist().setOperatorId(0L);
+        HttpEntity<SysBlacklistDTO> httpEntity = new HttpEntity<>(sysBlacklistDTO, headers);
+        try {
+            restTemplate.postForEntity(RequestPath.DOCTOR_URI+"/blacklist/operate",httpEntity,Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+    @RequestMapping("/toDeptDoctorList/{id}")
+    public String toDeptDoctorList(@PathVariable("id")long deptId){
+        return "/department/doctor-list";
+    }
+
+    @RequestMapping(value = "/deptDoctor/query",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<DoctorVO> queryDeptDoctorList( DeptDoctorQuery deptDoctorQuery){
+        WebResult<DoctorVO> result = new WebResult<>();
+        try {
+            PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/deptDoctorList/query?queryStr={}", PageInfo.class, JSON.toJSONString(deptDoctorQuery));
+            result.setCount(pageInfo.getTotal());
+            result.setList(pageInfo.getList());
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    @RequestMapping("/deptDoctor/delete/{id}")
+    @ResponseBody
+    public WebResult<String> deleteDeptDoctor(@PathVariable("id")long deptDoctorId){
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.delete(RequestPath.DOCTOR_URI+"/deptDoctor/delete/"+deptDoctorId);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/dismissAdmin/{id}")
+    @ResponseBody
+    public WebResult<String> dismissAdmin(@PathVariable("id")long deptDoctorId){
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/dismissAdmin/"+deptDoctorId,null,Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/appointAdmin/{id}")
+    @ResponseBody
+    public WebResult<String> appointAdmin(@PathVariable("id")long deptDoctorId){
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/admin/appoint/"+deptDoctorId,null,Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/toAddDoctor/{id}")
+    public String toAddDoctor(@PathVariable("id")long id,Model model) {
+        model.addAttribute("id",id);
+        HospitalQuery hospitalQuery = new HospitalQuery();
+        hospitalQuery.setPageIndex(1);
+        hospitalQuery.setPageSize(500);
+        PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/hospitalList?queryStr={queryStr}", PageInfo.class, JSON.toJSONString(hospitalQuery));
+        model.addAttribute("hospitalList",pageInfo.getList());
+        List titles = restTemplate.getForObject(RequestPath.SYSTEM_URI+"/dictionary/?dictCode=500", List.class);
+        model.addAttribute("titles",titles);
+        return "/department/doctor-add";
+    }
+
+    @RequestMapping(value = "/doctor/add",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> addDoctor(@RequestBody Doctor doctor){
+        WebResult<String> result = new WebResult<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        doctor.setOperator("李四");
+        HttpEntity<Doctor> doctorHttpEntity = new HttpEntity<>(doctor, headers);
+        try {
+            ResponseEntity<Integer> responseEntity = restTemplate.postForEntity(RequestPath.DOCTOR_URI+"/createDepartDoctor", doctorHttpEntity, Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return  result;
+
+    }
+
+    /**
+     * 按疾病添加医生
+     * @param id
+     * @param model
+     * @return
+     */
+    @RequestMapping("/toAddFamousDoctor/{diseaseId}")
+    public String toAddFamousDoctor(@PathVariable("diseaseId")long id,Model model) {
+        model.addAttribute("id",id);
+        return "/disease/famous-doctor-add";
+    }
+
+    /**
+     * 按医生添加疾病
+     * @param
+     * @return
+     */
+    @RequestMapping("/toFamousDoctorDisease")
+    public String toFamousDoctorDisease(){
+        return "/disease/famous-doctor-disease-list";
+    }
+
+    @RequestMapping("/famousDoctorDiseases")
+    @ResponseBody
+    public WebResult<DoctorExtVO> queryDoctorDiseaseListPage( DoctorQuery doctorQuery){
+        WebResult<DoctorExtVO> result = new WebResult<>();
+        try {
+            PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/doctorDisease/query?queryStr={queryStr}", PageInfo.class, JSON.toJSONString(doctorQuery));
+            result.setList(pageInfo.getList());
+            result.setCount(pageInfo.getTotal());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+    /**
+     * 按医生添加疾病
+     * @param doctorQuery
+     * @return
+     */
+    @RequestMapping("/diseaseDoctor/query")
+    @ResponseBody
+    public WebResult<DoctorDiseaseVO> queryDiseaseDoctors( DoctorDiseaseQuery doctorQuery) {
+        WebResult<DoctorDiseaseVO> result = new WebResult<>();
+        try {
+            PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/getDoctorDisease?queryStr={queryStr}", PageInfo.class,JSON.toJSONString(doctorQuery));
+            result.setList(pageInfo.getList());
+            result.setCount(pageInfo.getTotal());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 批量关联医生和疾病
+     * @param doctorDiseaseArr
+     * @return
+     */
+    @RequestMapping(value = "/diseaseDoctor/add",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> addDiseaseDoctor(@RequestParam("doctorDiseaseArr") String doctorDiseaseArr){
+        WebResult<String> result = new WebResult<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        List<DoctorDisease> doctorDiseaseList = JSON.parseArray(doctorDiseaseArr, DoctorDisease.class);
+        HttpEntity<List<DoctorDisease>> httpEntity = new HttpEntity<>(doctorDiseaseList, headers);
+        try {
+            ResponseEntity<Integer> responseEntity = restTemplate.postForEntity(RequestPath.DOCTOR_URI+"/relateDoctorWithDisease", httpEntity, Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 单个关联医生和疾病
+     * @param doctorDisease
+     * @return
+     */
+    @RequestMapping(value = "/diseaseDoctor/addOne",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> addOneDiseaseDoctor(@RequestBody DoctorDisease doctorDisease){
+        WebResult<String> result = new WebResult<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+//        List<DoctorDisease> doctorDiseaseList = JSON.parseArray(doctorDisease, DoctorDisease.class);
+        HttpEntity<DoctorDisease> httpEntity = new HttpEntity<>(doctorDisease, headers);
+        try {
+            ResponseEntity<String> responseEntity = restTemplate.postForEntity(RequestPath.DOCTOR_URI+"/diseaseDoctor/add", httpEntity, String.class);
+            result.setCode(responseEntity.getBody());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 根据疾病医生关联表 id 删除关联关系
+     * @param id
+     * @return
+     */
+    @RequestMapping("/diseaseDoctor/delere/{id}")
+    @ResponseBody
+    public WebResult<String> delereDiseaseDoctor(@PathVariable("id")long id){
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.delete(RequestPath.DOCTOR_URI+"/doctorDisease/delete/"+id);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 更新某疾病关联医生的顺序
+     * @param diseaseDoctorArr
+     * @return
+     */
+    @RequestMapping(value = "/diseaseDoctorSeq/update",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> updateDiseaseDoctorSeq(@RequestParam("diseaseDoctorArr") String diseaseDoctorArr){
+        WebResult<String> result = new WebResult<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        List<DoctorDisease> doctorDiseaseList = JSON.parseArray(diseaseDoctorArr, DoctorDisease.class);
+        HttpEntity<List<DoctorDisease>> httpEntity = new HttpEntity<>(doctorDiseaseList, headers);
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            Integer responseEntity = restTemplate.patchForObject(RequestPath.DOCTOR_URI+"/doctorDisease/update", httpEntity, Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+    @RequestMapping("/toEditFamousDoctor/{diseaseId}/{diseaseName}")
+    public String toEditFamousDoctor(@PathVariable("diseaseId")long id,Model model,@PathVariable("diseaseName")String name) {
+        model.addAttribute("id",id);
+        model.addAttribute("disease",name);
+        return "/disease/famous-doctor-edit";
+    }
+
+    @RequestMapping("/famousDoctor/query/{diseaseId}")
+    @ResponseBody
+    public WebResult<DoctorExtVO> queryFamousDoctors(@PathVariable("diseaseId")long id){
+        WebResult<DoctorExtVO> result = new WebResult<>();
+        List list = null;
+        try {
+            list = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/getDoctorsByDiseaseId/" + id, List.class);
+            result.setList(list);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 医生关联疾病跳转
+     * @return
+     */
+
+    @RequestMapping("/toDiseaseDoctor/{doctorId}")
+    public String toDiseaseDoctor(@PathVariable("doctorId")long id,Model model){
+        model.addAttribute("id",id);
+        return "/disease/disease-doctor";
+    }
+
+    @RequestMapping("/toAddedDisease/{doctorId}")
+    public String toAddedDisease(@PathVariable("doctorId")long id,Model model){
+        model.addAttribute("id",id);
+        return "/disease/disease-added";
+    }
+
+    @RequestMapping("/addedDisease/query")
+    @ResponseBody
+    public WebResult<DoctorDiseaseVO> queryAddedDisease( DoctorDiseaseQuery doctorDiseaseQuery){
+        WebResult<DoctorDiseaseVO> result = new WebResult<>();
+        try {
+            PageInfo pageInfo = restTemplate.getForObject(RequestPath.DOCTOR_URI+"/addedDisease/query?queryStr={queryStr}", PageInfo.class, JSON.toJSONString(doctorDiseaseQuery));
+            result.setCount(pageInfo.getTotal());
+            result.setList(pageInfo.getList());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    @RequestMapping("/addDisease2Doctor/{diseaseId}/{doctorId}")
+    @ResponseBody
+    public WebResult<String> addDoctorDisease(@PathVariable("diseaseId")long diseaseId,@PathVariable("doctorId")long doctorId){
+        WebResult<String> result = new WebResult<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        DoctorDisease doctorDisease = new DoctorDisease();
+        doctorDisease.setDoctorId(doctorId);
+        doctorDisease.setDiseaseId(diseaseId);
+        HttpEntity<DoctorDisease> httpEntity = new HttpEntity<>(doctorDisease, headers);
+        try {
+            restTemplate.postForEntity(RequestPath.DOCTOR_URI+"/doctorDisease/add",httpEntity,Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return  result;
+    }
+
+    @RequestMapping("/toDiseaseList/{doctorId}")
+    public String toDiseaseList(@PathVariable("doctorId")long id,Model model){
+        model.addAttribute("id",id);
+        return "/disease/disease-list";
+    }
+
+//    @RequestMapping("/doctorDisease/delete/{id}")
+//    public WebResult<String> deleteDoctorDisease
+
+}

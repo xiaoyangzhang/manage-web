@@ -1,0 +1,116 @@
+package com.yhyt.health.component;
+
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.session.mgt.SessionManager;
+import org.apache.shiro.spring.LifecycleBeanPostProcessor;
+import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
+import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
+import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.web.filter.DelegatingFilterProxy;
+
+import javax.servlet.Filter;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * Created by localadmin on 17/9/14.
+ */
+@Configuration
+@Import(Realm.class)
+@ConfigurationProperties(prefix = "shiroConfig")
+public class ShiroConfig {
+
+    @Value("${globalSessionTimeout}")
+    private long globalSessionTimeout = 3600000;
+
+    @Bean
+    public FilterRegistrationBean shiroFilterRegisterBean(){
+        FilterRegistrationBean shiroFilterRegisterBean = new FilterRegistrationBean();
+        shiroFilterRegisterBean.setFilter(new DelegatingFilterProxy("shiroFilter"));
+        shiroFilterRegisterBean.addInitParameter("targetFilterLifecycle","true");
+        shiroFilterRegisterBean.addUrlPatterns("/*");
+        return shiroFilterRegisterBean;
+    }
+
+    @Bean
+    public ShiroFilterFactoryBean shiroFilter(SecurityManager securityManager){
+        ShiroFilterFactoryBean shiroFilter = new ShiroFilterFactoryBean();
+        shiroFilter.setSecurityManager(securityManager);
+
+        //oauth过滤
+        Map<String, Filter> filters = new HashMap<>();
+        filters.put("oauth2", new OAuth2Filter());
+        shiroFilter.setFilters(filters);
+
+        Map<String, String> filterMap = new LinkedHashMap<>();
+        filterMap.put("/webjars/**", "anon");
+        filterMap.put("/druid/**", "anon");
+        filterMap.put("/static/**", "anon");
+
+        //swagger配置
+        filterMap.put("/swagger**", "anon");
+        filterMap.put("/v2/api-docs", "anon");
+        filterMap.put("/swagger-resources/configuration/ui", "anon");
+
+        filterMap.put("/toLogin", "anon");
+        filterMap.put("/manage/logout", "anon");
+        filterMap.put("/**/*.css", "anon");
+        filterMap.put("/**/*.js", "anon");
+        filterMap.put("/**/*.html", "anon");
+        filterMap.put("/fonts/**", "anon");
+        filterMap.put("/plugins/**", "anon");
+        filterMap.put("/favicon.ico", "anon");
+        filterMap.put("/captcha.jpg", "anon");
+        filterMap.put("/manage/login", "anon");
+//        filterMap.put("/", "anon");
+        filterMap.put("/**", "oauth2");
+        shiroFilter.setFilterChainDefinitionMap(filterMap);
+
+        return shiroFilter;
+    }
+
+    @Bean("lifecycleBeanPostProcessor")
+    public LifecycleBeanPostProcessor lifecycleBeanPostProcessor(){
+        return new LifecycleBeanPostProcessor();
+    }
+
+    @Bean
+    public SecurityManager securityManager(Realm realm, SessionManager sessionManager){
+        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
+        securityManager.setRealm(realm);
+        securityManager.setSessionManager(sessionManager);
+        return securityManager;
+    }
+
+    @Bean
+    public SessionManager sessionManager(){
+        DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
+        sessionManager.setSessionValidationSchedulerEnabled(true);
+        sessionManager.setGlobalSessionTimeout(globalSessionTimeout);
+        //sessionManager.setSessionIdCookieEnabled(false);
+        return sessionManager;
+    }
+
+    @Bean
+    public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator(){
+        DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator = new DefaultAdvisorAutoProxyCreator();
+        defaultAdvisorAutoProxyCreator.setProxyTargetClass(true);
+        return defaultAdvisorAutoProxyCreator;
+    }
+
+    @Bean
+    public AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor(SecurityManager securityManager){
+        AuthorizationAttributeSourceAdvisor sourceAdvisor = new AuthorizationAttributeSourceAdvisor();
+        sourceAdvisor.setSecurityManager(securityManager);
+        return sourceAdvisor;
+    }
+}

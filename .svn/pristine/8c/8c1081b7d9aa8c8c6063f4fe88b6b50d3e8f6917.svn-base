@@ -1,0 +1,369 @@
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%
+ String contextPath = request.getContextPath();
+	String gateWay = (String) request.getAttribute("gateWay");
+	String servicePath = gateWay+"/system-zxy";
+%>
+<!DOCTYPE html>
+<html>
+<title>城市维护</title>
+<%@include file="../top.jsp"%>
+<body>
+	<div style="margin: 0px; background-color: white;">
+		 <blockquote class="layui-elem-quote" style="float: right">
+			<a href="javascript:" class="layui-btn layui-btn-small" id="add">
+				<i class="layui-icon">&#xe608;</i> 添加根城市
+			</a> <a href="javascript:" class="layui-btn layui-btn-small"
+					id="addChild"> <i class="layui-icon">&#xe608;</i> 添加子城市
+			</a>
+		</blockquote>
+		<div class="layui-form">
+			<table class="layui-table admin-table">
+				<thead>
+				<tr>
+					<th>城市名称</th>
+					<th>城市简称</th>
+					<th>城市全拼</th>
+					<th>城市简拼</th>
+					<th>城市编码</th>
+					<th>是否主要城市</th>
+					<th>映射编码</th>
+					<th>序号</th>
+					<th>地区级别</th>
+					<!-- <th>操作</th> -->
+				</tr>
+				</thead>
+				<tbody id="content">
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<!--模板-->
+	<script type="text/html" id="tpl">
+			{{# layui.each(d.list, function(index, item){ }}
+			<tr data-parent="{{item.parentId}}" data-id="{{item.id}}" data-spread="false">
+				<td data-id="{{ item.id }}" >
+					{{# if(item.havChild&&item.havChild>0){ }}
+						<a href="javascript:" onclick="openChild(this,'{{item.id}}');">
+							<i class="layui-icon layui-tree-spread">+</i>
+						</a>
+						<cite>{{ item.name }}</cite></a>
+					{{# }else{ }}
+						<i class="layui-icon layui-tree-leaf"></i>
+						<cite>{{ item.name }}</cite>
+					{{# } }}
+			<!--打开样式 <a href="javascript:;"><i class="layui-icon layui-tree-spread"></i>
+					<i class="layui-icon layui-tree-branch"></i>
+					<cite>{{ item.name }}</cite></a>-->
+				</td>
+				<td>{{ item.abbrName }}</td>
+				<td>{{ item.fullSpell }}</td>
+				<td>{{ item.abbrSpell }}</td>
+				<td>{{ item.cityCode }}</td>
+				<td>{{# if(item.isMainCity&&item.isMainCity==1){ }}
+					{{ "是" }}
+					{{# }else{ }}
+					{{ "否" }}
+					{{# } }}
+				</td>
+				<td>{{ item.mappingCode }}</td>
+				<td>{{ item.sortNo==null?"":item.sortNo }}</td>
+				<td>{{ item.regionLevel }}</td>
+				<!--<td>
+					<a href="javascript:;" data-id="{{ item.id }}" data-opt="edit" class="layui-btn layui-btn-mini">编辑</a>
+					<a href="javascript:;" data-id="1" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>-->
+			</tr>
+			{{# }); }}
+			
+		</script>
+	<script type="text/javascript">
+			layui.config({
+				base: '<%=contextPath%>/static/js/'
+			});
+			
+			function spread(tr){
+				var after = tr.next();
+				if(after){
+					var id = tr.attr("data-id");
+	    			var parentId = after.attr("data-parent");
+	       			while(id==parentId){
+	       				//after.hide();
+	       				if("true"==(tr.attr("data-spread"))){
+	       					after.show(); 
+	       				}
+	       				after = spread(after);
+	       				parentId = after.attr("data-parent");
+	       			}
+	       			return after;
+				}
+    		}
+			
+			function closed(tr){
+				var after = tr.next();
+				if(after){
+					var id = tr.attr("data-id");
+	    			var parentId = after.attr("data-parent");
+	       			while(id==parentId){
+	       				//after.hide();
+	       				after.hide(); 
+	    				after = closed(after);
+	        			parentId = after.attr("data-parent");
+	       			}
+	       			return after;
+				}
+    		}
+			
+			function openChild(elem,id){
+				var $ = layui.jquery;
+				var tr = $(elem).parent().parent();
+        		if("false"==($(tr).attr("data-spread"))){
+        			$(tr).attr("data-spread","true");
+        			$(elem).empty();
+        			$(elem).prepend('<i class="layui-icon layui-tree-spread">-</i>');
+        			
+        			var after = $(tr).next();
+        			var parentId = after.attr("data-parent");
+        			if(id==parentId){
+        				spread($(tr));
+
+        			}else{
+        				$.ajax({
+        	                type: "GET",
+        	                url: "<%=servicePath%>/city/",
+        	                dataType : 'json',
+        	                data:{parentId:id},
+        	                success: function (obj) {
+        	                    if(obj.msg){
+        	                    	layer.alert(data.msg);
+        	                    }else{
+        	                      	layui.each(obj, function(index, item){
+        	                    		var html = '<tr data-parent="'+item.parentId+'" data-id="'+item.id+'" data-spread="false"><td  data-id="'+item.id+'" >';
+        	                    		if(item.havChild&&item.havChild>0){
+        	                    			html = html +'<a href="javascript:" onclick="openChild(this,\''+item.id+'\');">'+'<i class="layui-icon layui-tree-spread">+</i></a>';
+        	                    		}
+        	                    		var isMainCity = "否";
+                                        if (item.isMainCity && item.isMainCity == 1) {
+                                            isMainCity = "是"
+                                        }
+                                        html = html+'<cite>'+item.name+'</cite></a></td><td>'+item.abbrName +'</td><td>'+item.fullSpell +'</td><td>'+item.abbrSpell
+        	                    			+'</td><td>'+item.cityCode +'</td><td>'+ isMainCity +'</td><td>'+item.mappingCode +'</td><td>'+item.sortNo 
+        	                    			+'</td><td>'+item.regionLevel +'</td>';
+        	                    			//+'<td><a href="javascript:;" data-id="'+item.id+'" data-opt="edit" class="layui-btn layui-btn-mini">编辑</a>'
+        	            					//+'<a href="javascript:;" data-id="'+item.id+'" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a></td>';
+        	            				
+        	            				$(tr).after(html);
+        	                    		//绑定所有编辑按钮事件						
+        	    						/* $(tr).next().children('td:last-child').children('a[data-opt=edit]').on('click', function() {
+    	    								layer.msg($(this).data('id'));
+    	    							}); */
+    	    						});
+        	                    }
+        	                },
+        	                error: function(data) {
+        	                	layer.alert(data.msg);
+        	                }
+        	            });
+        			}
+        		}else{
+        			$(tr).attr("data-spread","false");
+        			$(elem).empty();
+        			$(elem).prepend('<i class="layui-icon layui-tree-spread">+</i>');
+        			closed($(tr));
+        		}
+			}
+			
+			layui.use(['paging', 'form'], function() {
+				var $ = layui.jquery,
+					paging = layui.paging(),
+					layerTips = parent.layer === undefined ? layui.layer : parent.layer, //获取父窗口的layer对象
+					layer = layui.layer, //获取当前窗口的layer对象
+					form = layui.form();
+
+                paging.init({
+                    openWait: true,
+                    url: '<%=servicePath%>/city/',
+					elem: '#content', //内容容器
+					params: { //发送到服务端的参数
+						level:1
+					},
+					type: 'GET',
+					tempElem: '#tpl', //模块容器
+					paged:false,
+					success: function() { //渲染成功的回调
+						//alert('渲染成功');
+					},
+					fail: function(msg) { //获取数据失败的回调
+						//alert('获取数据失败')
+					},
+					complate: function() { //完成的回调
+
+						//绑定所有编辑按钮事件						
+						/* $('#content').children('tr').each(function() {
+							var $that = $(this);
+							$that.children('td:last-child').children('a[data-opt=edit]').on('click', function() {
+								layer.msg($(this).data('id'));
+							});
+
+						}); */
+
+					},
+				});
+				//获取所有选择的列
+				$('#getSelected').on('click', function() {
+					var names = '';
+					$('#content').children('tr').each(function() {
+						var $that = $(this);
+						var $cbx = $that.children('td').eq(0).children('input[type=checkbox]')[0].checked;
+						if($cbx) {
+							var n = $that.children('td:last-child').children('a[data-opt=edit]').data('name');
+							names += n + ',';
+						}
+					});
+					layer.msg('你选择的名称有：' + names);
+				});
+
+				var addBoxIndex = -1;
+				$('#add').on('click', function() {
+					if(addBoxIndex !== -1)
+						return;
+					//本表单通过ajax加载 --以模板的形式，当然你也可以直接写在页面上读取
+					$.get('<%=contextPath%>/cityPage/toAddCity', null, function(form) {
+						addBoxIndex = layer.open({
+							type: 1,
+							title: '添加根城市',
+							content: form,
+							btn: ['保存', '取消'],
+							shade: false,
+							offset: ['100px', '30%'],
+							area: ['600px', '400px'],
+							zIndex: 19950924,
+							maxmin: true,
+							yes: function(index) {
+								//触发表单的提交事件
+								$('form.layui-form').find('button[lay-filter=citySubmit]').click();
+							},
+							full: function(elem) {
+								var win = window.top === window.self ? window : parent.window;
+								$(win).on('resize', function() {
+									var $this = $(this);
+									elem.width($this.width()).height($this.height()).css({
+										top: 0,
+										left: 0
+									});
+									elem.children('div.layui-layer-content').height($this.height() - 95);
+								});
+							},
+							success: function(layero, index) {
+								//弹出窗口成功后渲染表单
+								var form = layui.form();
+								form.render();
+								form.on('submit(citySubmit)', function(data) {
+//									console.log(data.elem); //被执行事件的元素DOM对象，一般为button对象
+//									console.log(data.form); //被执行提交的form对象，一般在存在form标签时才会返回
+//									console.log(data.field); //当前容器的全部表单字段，名值对形式：{name: value}
+									data.field.level=1;
+									data.field.parentId=0;
+									//这里可以写ajax方法提交表单
+									$.ajax({
+										url:'<%=servicePath%>/city/edit?'+$.param(data.field),
+										type:'post',
+										dataType:'json',
+//										data:{},
+										success:function (result) {
+											if (result!=undefined && result!=null){
+											    layer.msg("添加成功",{icon:1});
+											    layer.close(index);
+											    location.reload(true);
+											}else
+                                                layer.msg("添加失败",{icon:2});
+
+                                        },
+										error:function (result) {
+                                            layer.msg("添加失败",{icon:2});
+
+                                        }
+									});
+									return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。									
+								});
+							},
+							end: function() {
+								addBoxIndex = -1;
+							}
+						});
+					});
+				});
+
+				$('#addChild').on('click', function() {
+					var that = this;
+                    $.get('<%=contextPath%>/cityPage/toAddCity', parentId, function(form) {
+                        addBoxIndex = layer.open({
+                            type: 1,
+                            title: '添加子城市',
+                            content: form,
+                            btn: ['保存', '取消'],
+                            shade: false,
+                            offset: ['100px', '30%'],
+                            area: ['600px', '400px'],
+                            zIndex: 19950924,
+                            maxmin: true,
+                            yes: function(index) {
+                                //触发表单的提交事件
+                                $('form.layui-form').find('button[lay-filter=citySubmit]').click();
+                            },
+                            full: function(elem) {
+                                var win = window.top === window.self ? window : parent.window;
+                                $(win).on('resize', function() {
+                                    var $this = $(this);
+                                    elem.width($this.width()).height($this.height()).css({
+                                        top: 0,
+                                        left: 0
+                                    });
+                                    elem.children('div.layui-layer-content').height($this.height() - 95);
+                                });
+                            },
+                            success: function(layero, index) {
+                                //弹出窗口成功后渲染表单
+                                var form = layui.form();
+                                form.render();
+                                form.on('submit(citySubmit)', function(data) {
+//									console.log(data.elem); //被执行事件的元素DOM对象，一般为button对象
+//									console.log(data.form); //被执行提交的form对象，一般在存在form标签时才会返回
+//									console.log(data.field); //当前容器的全部表单字段，名值对形式：{name: value}
+                                    data.field.level=2;
+                                    data.field.parentId=0;
+                                    //这里可以写ajax方法提交表单
+                                    $.ajax({
+                                        url:'<%=servicePath%>/city/edit?'+$.param(data.field),
+                                        type:'post',
+                                        dataType:'json',
+//										data:{},
+                                        success:function (result) {
+                                            if (result!=undefined && result!=null){
+                                                layer.msg("添加成功",{icon:1});
+                                                layer.close(index);
+                                                location.reload(true);
+                                            }else
+                                                layer.msg("添加失败",{icon:2});
+
+                                        },
+                                        error:function (result) {
+                                            layer.msg("添加失败",{icon:2});
+
+                                        }
+                                    });
+                                    return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+                                });
+                            },
+                            end: function() {
+                                addBoxIndex = -1;
+                            }
+                        });
+                    });
+				});
+			});
+		</script>
+</body>
+
+</html>

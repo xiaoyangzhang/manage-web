@@ -1,0 +1,33 @@
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+	String contextPath = request.getContextPath();
+%>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link rel="stylesheet" href="<%=contextPath%>/static/plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="<%=contextPath%>/static/css/main.css" />
+</head>
+
+<body>
+<div class="admin-main">
+	<blockquote class="layui-elem-quote layui-quote-nm">当前位置-->用户详情</blockquote>
+	<fieldset class="layui-elem-field">
+		<%--<ul>
+			<li>基本信息</li>
+			<li>扩展信息</li>
+		</ul>--%>
+		<div class="layui-field-box">
+			<fieldset class="layui-elem-field layui-field-title">
+				<div class="layui-field-box">
+				</div>
+			</fieldset>
+
+		</div>
+	</fieldset>
+</div>
+</body>
+
+</html>

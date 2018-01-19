@@ -1,0 +1,305 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+         pageEncoding="UTF-8" %>
+<%@ include file="../../common/taglibs.jsp" %>
+<%
+    //id1
+    String maindataid = request.getParameter("maindataid");
+
+//id2
+    String backurl = request.getParameter("backurl");
+
+
+%>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>用户详情</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+</head>
+
+<body>
+<div class="layui-whole">
+    <blockquote class="layui-elem-quote">当前位置:用户详情</blockquote>
+    <div class="layui-whole-con">
+        <h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>基础信息</h2>
+        <table class="layui-table" style="margin:0 0 10px 0;">
+            <colgroup>
+                <col width="100px">
+                <col>
+                <col width="100px">
+                <col>
+                <col width="100px">
+                <col>
+            </colgroup>
+            <tbody>
+            <tr>
+                <th>用户名/手机号</th>
+                <td>${userInfo.username}</td>
+                <th>性别</th>
+                <td>${userInfo.sex}</td>
+                <th>身份证号</th>
+                <td>${userInfo.idno}</td>
+            </tr>
+            <tr>
+                <th>出生日期</th>
+                <td>${userInfo.birthday}</td>
+                <th>注册日期</th>
+                <td>${userInfo.createTime}</td>
+                <th>黑名单标志</th>
+                <td>${userInfo.isBlacklist}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>实名信息</h2>
+        <table class="layui-table" style="margin:0 0 10px 0;">
+            <colgroup>
+                <col width="100px">
+                <col>
+                <col width="100px">
+                <col>
+                <col width="100px">
+                <col>
+                <col width="100px">
+                <col>
+            </colgroup>
+            <tbody>
+            <tr>
+                <th>姓名</th>
+                <td>${userInfo.realname}</td>
+                <td style="display: none;">${userInfo.id}</td>
+                <th>性别</th>
+                <td>${userInfo.sex}</td>
+                <th>身份证号</th>
+                <td>${userInfo.idno}</td>
+                <th>审核人</th>
+                <td>${userInfo.operatorId}</td>
+            </tr>
+            </tbody>
+        </table>
+        <input type="hidden" value="${userInfo.id }" id="equipid" name="title" lay-verify="required" autocomplete="off" class="layui-input">
+
+        <h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>黑名单记录</h2>
+        <table class="layui-table" style="margin:0 0 10px 0;">
+            <colgroup>
+                <col>
+                <col width="100px">
+                <col width="150px">
+            </colgroup>
+            <thead>
+            <tr>
+                <th style="text-align: center">原因</th>
+                <th style="text-align: center">操作类型</th>
+                <th style="text-align: center">操作时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach items="${userBlack}" var="item">
+                <tr>
+                    <td>${item.reason}</td>
+                    <td style="text-align: center">${item.type}</td>
+                    <td style="text-align: center">${item.createTime }</td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+
+    </div>
+    <div class="layui-fixed-btn">
+        <div class="layui-form-item">
+            <button id="ss1" type="button" class="layui-btn layui-btn-normal">重置密码</button>
+            <c:if test="${userInfo.isBlacklist=='否'}">
+                <button id="ss2" type="button" class="layui-btn layui-btn-normal">加入黑名单</button>
+            </c:if>
+            <c:if test="${userInfo.isBlacklist=='是'}">
+                <button id="ss3" type="button" class="layui-btn layui-btn-normal">移除黑名单</button>
+            </c:if>
+
+            <button type="button" onclick='returnback()' class="layui-btn layui-btn-normal" style="float: right;">返回</button>
+        </div>
+    </div>
+</div>
+<script>
+    function returnback() {
+        window.location = '<%=path%>/index?id=/pages<%=backurl%>';
+    }
+
+
+    function subbmitt() {
+        var params = {};
+        params["equipid"] = layui.jquery("#equipid").val();
+        params["equipment"] = layui.jquery("#equipment").val();
+        params["equipname"] = layui.jquery("#equipname").val();
+        params["equipurl"] = layui.jquery("#equipurl").val();
+        layui.jquery.ajax({
+            type: "get",
+            url: '<%=path%>/updatenewH5?id1=' + Math.random(),
+            data: params,
+            async: true,
+            dataType: "text",
+            success: function (data) {
+                if (data == "success") {
+                    layui.layer.msg("修改成功！")
+                    returnback();
+                }
+                if (data == "fail") {
+                    layer.alert("修改失败", {
+                        title: '修改结果！'
+                    })
+                }
+            },
+            error: function (data) {
+                layui.layer.msg('页面加载出错');
+            }
+        });
+
+    }
+
+
+    layui.use(['form', 'layedit', 'laydate'], function () {
+        var form = layui.form(),
+                layer = layui.layer,
+                layedit = layui.layedit,
+                laydate = layui.laydate;
+
+        //创建一个编辑器
+        var editIndex = layedit.build('LAY_demo_editor');
+        //自定义验证规则
+        form.verify({
+            title: function (value) {
+                if (value.length < 5) {
+                    return '标题至少得5个字符啊';
+                }
+            },
+            pass: [/(.+){6,12}$/, '密码必须6到12位'],
+            content: function (value) {
+                layedit.sync(editIndex);
+            }
+        });
+
+        //监听提交
+        form.on('submit(demo1)', function (data) {
+            subbmitt();
+            return false;
+        });
+
+
+        layui.jquery('#ss1').on('click', function () {
+            var con = '<div style="padding:10px;">新密码<input type="text" class="layui-input" style="margin-bottom:5px;" name="url" placeholder="新密码" /></div>';
+            layer.open({
+                type: 1,
+                title: '重置密码',
+                content: con,
+                btn: ['保存', '取消'],
+                area: ['350px', '250px'],
+                yes: function (index, layero) {
+                    //这是核心的代码。
+                    var params = {};
+                    params["equipid"] = layui.jquery("#equipid").val();
+                    params["newpassword"] = layui.jquery(layero).find('input').val();
+                    layui.jquery.ajax({
+                        type: "get",
+                        url: '<%=path%>/resetpassword?id1=' + Math.random(),
+                        data: params,
+                        async: true,
+                        dataType: "text",
+                        success: function (data) {
+                            if (data == "success") {
+                                layui.layer.msg("重置密码成功！")
+                                returnback();
+                            }
+                            if (data == "fail") {
+                                layer.alert("重置密码失败", {
+                                    title: '修改结果！'
+                                })
+                            }
+                        },
+                        error: function (data) {
+                            layui.layer.msg('重置密码失败');
+                        }
+                    });
+                },
+                shade: false,
+                maxmin: true
+            });
+
+        });
+
+
+        layui.jquery('#ss2').on('click', function () {
+            var con = '<div style="padding:10px;"><textarea id="blackreason" placeholder="请输入内容" class="layui-textarea"></textarea></div>';
+            layer.open({
+                type: 1,
+                title: '加入黑名单原因',
+                content: con,
+                btn: ['保存', '取消'],
+                area: ['350px', '250px'],
+                yes: function (index, layero) {
+                    //这是核心的代码。
+                    var params = {};
+                    params["equipid"] = layui.jquery("#equipid").val();
+                    params["reason"] = layui.jquery(layero).find('textarea').val();
+                    layui.jquery.ajax({
+                        type: "get",
+                        url: '<%=path%>/addintoblacklist?id1=' + Math.random(),
+                        data: params,
+                        async: true,
+                        dataType: "text",
+                        success: function (data) {
+                            if (data == "success") {
+                                layui.layer.msg("加入黑名单成功！")
+                                returnback();
+                            }
+                            if (data == "fail") {
+                                layer.alert("加入黑名单失败", {
+                                    title: '修改结果！'
+                                })
+                            }
+                        },
+                        error: function (data) {
+                            layui.layer.msg('页面加载出错');
+                        }
+                    });
+                },
+                shade: false,
+                maxmin: true
+            });
+        });
+
+
+        layui.jquery('#ss3').on('click', function () {
+            var params = {};
+            params["equipid"] = layui.jquery("#equipid").val();
+            params["reason"] = '';
+            layui.jquery.ajax({
+                type: "get",
+                url: '<%=path%>/removefromblacklist?id1=' + Math.random(),
+                data: params,
+                async: true,
+                dataType: "text",
+                success: function (data) {
+                    if (data == "success") {
+                        layui.layer.msg("移除黑名单成功！");
+                        returnback();
+                    }
+                    if (data == "fail") {
+                        layer.alert("移除黑名单失败", {
+                            title: '修改结果！'
+                        })
+                    }
+                },
+                error: function (data) {
+                    layui.layer.msg('页面加载出错');
+                }
+            });
+        });
+    });
+</script>
+</body>
+
+</html>

@@ -1,0 +1,155 @@
+package com.yhyt.health.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.yhyt.health.configuration.WebPathConfiguration;
+import com.yhyt.health.model.PatientCasearchives;
+import com.yhyt.health.model.PatientDiagnosePics;
+import com.yhyt.health.model.dto.CustomerServiceDTO;
+import com.yhyt.health.model.dto.ServiceDetailDTO;
+import com.yhyt.health.model.dto.TaskStatisticsDTO;
+import com.yhyt.health.model.query.CustomerServiceQuery;
+import com.yhyt.health.result.WebResult;
+import com.yhyt.health.spring.AppResult;
+import com.yhyt.health.util.Page;
+import com.yhyt.health.util.WebUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.ServletRequestDataBinder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import javax.servlet.http.HttpServletRequest;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+
+@Controller
+@RequestMapping("/task")
+public class ServiceTaskController {
+
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private WebPathConfiguration webPathConfiguration;
+
+    @InitBinder
+    protected void initBinder(HttpServletRequest request, ServletRequestDataBinder binder) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        simpleDateFormat.setLenient(false);
+        CustomDateEditor dateEditor = new CustomDateEditor(simpleDateFormat, true);
+        binder.registerCustomEditor(Date.class,dateEditor);
+    }
+    @RequestMapping("/toTaskList")
+    public String toTaskList(){
+        return "/task/task-list";
+    }
+    @RequestMapping("/tasks")
+    @ResponseBody
+    public WebResult<CustomerServiceDTO> selectServiceTaskListPage(CustomerServiceQuery query){
+        WebResult<CustomerServiceDTO> result = new WebResult<>();
+        try {
+            ResponseEntity<Page> responseEntity = restTemplate.getForEntity(webPathConfiguration.getSystemUrl()+"/tasks?queryStr={queryStr}",Page.class, JSON.toJSONString(query));
+            if (responseEntity!=null && responseEntity.getStatusCode().value()== HttpStatus.SC_OK){
+                Page page = responseEntity.getBody();
+                result.setList(page.getResult());
+                result.setCount(page.getTotalRecord());
+            }
+            //else {
+//                result.setList(Collections.EMPTY_LIST);
+//                result.setCount(0);
+//            }
+        } catch (Exception e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/statistics")
+    @ResponseBody
+    public WebResult<TaskStatisticsDTO> selectServiceTaskStatistics(@RequestBody CustomerServiceQuery query){
+        WebResult<TaskStatisticsDTO> result = new WebResult<>();
+        try {
+            ResponseEntity<TaskStatisticsDTO> responseEntity = restTemplate.getForEntity(webPathConfiguration.getSystemUrl()+"/task/statistics?queryStr={queryStr}",TaskStatisticsDTO.class,JSON.toJSONString(query));
+            if (responseEntity!=null && responseEntity.getStatusCode().value()== HttpStatus.SC_OK){
+                TaskStatisticsDTO dto = responseEntity.getBody();
+                result.setEntity(dto);
+            }
+        } catch (Exception e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/{id}")
+    public String selectById(@PathVariable("id")Long id, Model model,HttpServletRequest request){
+        ResponseEntity<ServiceDetailDTO> responseEntity = restTemplate.getForEntity(webPathConfiguration.getSystemUrl()+"/task/"+id,ServiceDetailDTO.class);
+        if (responseEntity!=null && responseEntity.getStatusCode().value()== HttpStatus.SC_OK){
+            ServiceDetailDTO dto = responseEntity.getBody();
+            //查询病情图片
+            PatientDiagnosePics patientPic = restTemplate.getForObject(webPathConfiguration.getPatientUrl() + "/patient/pics/" + dto.getPatientId() + "/" + dto.getDeptId() + "/6", PatientDiagnosePics.class);
+            if (patientPic!=null){
+                if (StringUtils.isNotEmpty(patientPic.getPicUrl())&& patientPic.getPicUrl().indexOf(",")>0) {
+                    String[] picArr = patientPic.getPicUrl().split(",");
+                    model.addAttribute("pics",Arrays.asList(picArr));
+                }else{
+                    model.addAttribute("pics",patientPic.getPicUrl());
+                }
+            }
+            //查询病情描述
+            PatientCasearchives patientCasearchives = restTemplate.getForObject(webPathConfiguration.getPatientUrl() + "/patient/desc/" + dto.getPatientId() + "/" + dto.getDeptId() + "/1", PatientCasearchives.class);
+            model.addAttribute("patientCasearchives",patientCasearchives);
+
+            model.addAttribute("detail",dto);
+            model.addAttribute("id",id);
+            model.addAttribute("taskLogs",dto.getTaskLogList());
+        }
+        model.addAttribute("curUser",WebUtils.getCurrUserName(request));
+        return "/task/task-details";
+    }
+
+    @RequestMapping("/release")
+    @ResponseBody
+    public WebResult<String> releaseTasks(HttpServletRequest request){
+        WebResult<String> result = new WebResult<>();
+        String currUserName = WebUtils.getCurrUserName(request);
+        try {
+            AppResult appResult = restTemplate.patchForObject(webPathConfiguration.getSystemUrl() + "task/release/" + currUserName, null, AppResult.class);
+            if (appResult!=null && "501".equals(appResult.getStatus().getCode())){
+                result.setCode(appResult.getStatus().getCode());
+                result.setMsg(appResult.getMsg());
+            }
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/state/update")
+    @ResponseBody
+    public WebResult<String> updateTaskState( Long id, Byte state, String content,String action,HttpServletRequest request){
+        WebResult<String> result = new WebResult<>();
+        String currUserName = WebUtils.getCurrUserName(request);
+        try {
+            AppResult appResult = restTemplate.patchForObject(webPathConfiguration.getSystemUrl() + "task/state/update?id={id}&orderId={orderId}&state={state}&content={content}&operator={operator}&action={action}", null, AppResult.class,id,null,state,content,currUserName,action);
+            if (appResult!=null && "501".equals(appResult.getStatus().getCode())){
+                result.setCode(appResult.getStatus().getCode());
+                result.setMsg(appResult.getMsg());
+            }
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/messagetask/form/{patientId}")
+    public String toMessageFormList(@PathVariable("patientId")Long patientId,Model model){
+        model.addAttribute("patientId",patientId);
+        return "/task/messageTask";
+    }
+}

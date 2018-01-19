@@ -1,0 +1,56 @@
+package com.yhyt.health;
+
+import com.github.tobato.fastdfs.FdfsClientConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.EnableMBeanExport;
+import org.springframework.context.annotation.Import;
+import org.springframework.jmx.support.RegistrationPolicy;
+import org.springframework.web.client.RestTemplate;
+@Import(FdfsClientConfig.class)
+@EnableMBeanExport(registration = RegistrationPolicy.IGNORE_EXISTING)
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+@EnableDiscoveryClient
+public class ManageConsoleApplication extends SpringBootServletInitializer {
+
+    public static Logger logger = LoggerFactory.getLogger(ManageConsoleApplication.class);
+
+    protected SpringApplicationBuilder configure(
+            SpringApplicationBuilder application) {
+        return application.sources(ManageConsoleApplication.class);
+    }
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate(){
+//        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+//        HttpClientBuilder httpClientBuilder = new HttpClientBuilder();
+//        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
+//        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+//        connectionManager.setMaxTotal(100);
+//        connectionManager.setDefaultMaxPerRoute(50);
+//        httpClientBuilder.setConnectionManager(connectionManager);
+//        DefaultHttpRequestRetryHandler retryHandler = new DefaultHttpRequestRetryHandler(2, true);
+//        httpClientBuilder.setRetryHandler(retryHandler);
+//        CloseableHttpClient httpClient = httpClientBuilder.build();
+//        requestFactory.setHttpClient(httpClient);
+//        requestFactory.setConnectTimeout(20000);
+//        requestFactory.setReadTimeout(20000);
+//
+        RestTemplate restTemplate = new RestTemplate();
+//        restTemplate.setRequestFactory(requestFactory);
+        return restTemplate;
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(ManageConsoleApplication.class,args);
+        logger.info("provider system 启动成功");
+    }
+}

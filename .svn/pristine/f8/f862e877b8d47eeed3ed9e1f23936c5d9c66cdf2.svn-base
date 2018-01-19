@@ -1,0 +1,117 @@
+package com.yhyt.health.controller;
+
+import com.yhyt.health.constant.RequestPath;
+import com.yhyt.health.model.*;
+import com.yhyt.health.result.WebResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.ModelAndView;
+
+import java.util.List;
+
+@Controller
+@RequestMapping("/dictPage")
+public class DictWebController {
+	
+	 @Autowired
+	 private RestTemplate restTemplate;
+	
+	@RequestMapping("/dictDepartment")
+	public String dictDepartment(){
+		return "/department/dictDepartmentList";
+	}
+	
+	@RequestMapping("/dictionary")
+	public String dictionaryList(){
+		return "/dict/dictionaryList";
+	}
+	
+	@RequestMapping("/dictionary/form")
+	public ModelAndView dictionaryEdit(Dictionary dictionary){
+		ModelAndView model = new ModelAndView();
+		model.setViewName("/dict/dictionaryForm");
+//		Dictionary dictionary = new Dictionary();
+//		dictionary.setId(id);
+		model.addObject("dictionary", dictionary);
+		return model;
+	}
+	
+	@RequestMapping("/disease")
+	public String diseasesList(){
+		return "/disease/diseaseList";
+	}
+	
+	@RequestMapping("/disease/form")
+	public ModelAndView diseaseEdit(DictDisease disease){
+		ModelAndView model = new ModelAndView();
+		model.setViewName("/disease/diseaseForm");
+		model.addObject("disease", disease);
+		return model;
+	}
+	
+	@RequestMapping("/diseaseGroup")
+	public String diseaseGroupList(){
+		return "/disease/diseaseGroupList";
+	}
+	
+	@RequestMapping("/diseaseGroup/form")
+	public ModelAndView diseaseGroupEdit(DictDiseaseGroup diseaseGroup){
+		ModelAndView model = new ModelAndView();
+		model.setViewName("/disease/diseaseGroupForm");
+		model.addObject("diseaseGroup", diseaseGroup);
+		return model;
+	}
+	
+	@RequestMapping("/diseaseGroupRelation")
+	public ModelAndView diseaseGroupRelationList(DictDiseaseGroupRelation diseaseGroupRelation){
+		ModelAndView model = new ModelAndView();
+		model.setViewName("/disease/diseaseRelationList");
+		model.addObject("diseaseGroupRelation", diseaseGroupRelation);
+		return model;
+	}
+	
+	@RequestMapping("/diseaseGroupRelation/form/{dictDiseaseGroupId}")
+	public ModelAndView diseaseGroupRelationAdd(DictDiseaseGroupRelation diseaseGroupRelation){
+		ModelAndView model = new ModelAndView();
+		model.setViewName("/disease/addDiseaseList");
+		model.addObject("diseaseGroupRelation", diseaseGroupRelation);
+		return model;
+	}
+
+	/**
+	 * 根据省份 id 查询城市
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping("/cities/query/{parentId}")
+	@ResponseBody
+	public WebResult<DictCity> queryCities(@PathVariable("parentId")long id){
+		WebResult<DictCity> result = new WebResult<>();
+		try {
+			List list = restTemplate.getForObject(RequestPath.SYSTEM_URI+"/city/?parentId=" + id, List.class);
+			result.setList(list);
+		} catch (RestClientException e) {
+			result.setCode("500");
+		}
+		return result;
+
+	}
+
+	@RequestMapping("/deptCats/query/{parentCode}")
+	@ResponseBody
+	public WebResult<DictDepartment> queryDeptCats(@PathVariable("parentCode")String code){
+		WebResult<DictDepartment> result = new WebResult<>();
+		try {
+			List list = restTemplate.getForObject(RequestPath.SYSTEM_URI+"/dictDepartmentList/" + code, List.class);
+			result.setList(list);
+		} catch (RestClientException e) {
+			result.setCode("500");
+		}
+		return result;
+	}
+}

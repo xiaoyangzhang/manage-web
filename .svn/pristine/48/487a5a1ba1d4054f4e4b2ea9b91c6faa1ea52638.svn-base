@@ -1,0 +1,485 @@
+package com.yhyt.health.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.client.RestTemplate;
+
+import com.yhyt.health.model.SysLink;
+import com.yhyt.health.util.Dictionary;
+import com.yhyt.health.util.ResultForLayui;
+import com.yhyt.health.util.WebUtils;
+
+import net.sf.json.JSONObject;
+/*
+ * 张衡
+ * 业务操作实现类
+ */
+//业务操作的的controller
+@Controller
+@RequestMapping("/newhealth")
+public class BizController  extends BaseController {
+	
+	
+	 @Autowired
+	 private RestTemplate restTemplate;
+	
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：订单标记为已开
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/orderdoflag",method=RequestMethod.POST)
+	public String orderdoflag(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String id1 = request.getParameter("id1");
+			
+		    String url=Dictionary.BathRestUrl+"orderdoflag?"+"id="+id;
+			
+			
+			String u=restTemplate.getForEntity(url, String.class).getBody();
+					
+//			String u = patientService.updateOrderById(id);
+			response.setCharacterEncoding("UTF-8");
+			ResultForLayui rfl=new ResultForLayui();
+			
+			response.getWriter().print(u);
+			return null;
+
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：新增h5页面
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/addnewH5",method=RequestMethod.GET)
+	public String addnewH5(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String id1 = request.getParameter("id1");
+			String equipment = request.getParameter("equipment");
+			String equipname = request.getParameter("equipname");
+			String equipurl = request.getParameter("equipurl");
+			equipurl=equipurl.replace("&","%26").replace("&","%26").replace("&","%26").replace("&","%26");
+			  String url=Dictionary.BathRestUrl+"addnewH5?"+"equipment="+equipment+"&equipname="+equipname+"&equipurl="+equipurl;
+				
+				
+				String u=restTemplate.getForEntity(url, String.class).getBody();
+			response.setCharacterEncoding("UTF-8");
+			ResultForLayui rfl=new ResultForLayui();
+			
+			response.getWriter().print(u);
+			return null;
+
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：h5页面更新
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/updatenewH5",method=RequestMethod.GET)
+	public String updatenewH5(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String id1 = request.getParameter("id1");
+			String equipid = request.getParameter("equipid");
+			String equipment = request.getParameter("equipment");
+			String equipname = request.getParameter("equipname");
+			String equipurl = request.getParameter("equipurl");
+
+			equipurl=equipurl.replace("&","\\u0024");
+			SysLink sl=new SysLink();
+			sl.setContent(equipment);
+			sl.setUrl(equipurl);
+			sl.setId(Long.parseLong(equipid));
+			  String url=Dictionary.BathRestUrl+"updatenewH5?"+"equipment="+equipment+"&equipname="+equipname+"&equipurl="+equipurl+"&equipid="+equipid;
+				
+				
+				String u=restTemplate.getForEntity(url, String.class).getBody();
+//			String u = patientService.updateSyslink(sl);
+			response.setCharacterEncoding("UTF-8");
+			ResultForLayui rfl=new ResultForLayui();
+			
+			response.getWriter().print(u);
+			return null;
+
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：加入黑名单
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/addintoblacklist",method=RequestMethod.GET)
+	public String addintoblacklist(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String id1 = request.getParameter("id1");
+			String equipid = request.getParameter("equipid");
+			String reason = request.getParameter("reason");
+			String operator=WebUtils.getCurrUserName(request);
+			
+			  String url=Dictionary.BathRestUrl+"addintoblacklist?"+"reason="+reason+"&equipid="+equipid+"&operator="+operator;
+				
+				
+				String u=restTemplate.getForEntity(url, String.class).getBody();
+//			String u = patientService.updateSyslink(sl);
+			response.setCharacterEncoding("UTF-8");
+			ResultForLayui rfl=new ResultForLayui();
+			
+			response.getWriter().print(u);
+			return null;
+
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：加入黑名单
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/removefromblacklist",method=RequestMethod.GET)
+	public String removefromblacklist(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String id1 = request.getParameter("id1");
+			String equipid = request.getParameter("equipid");
+			String reason = request.getParameter("reason");
+			String operator=WebUtils.getCurrUserName(request);
+			  String url=Dictionary.BathRestUrl+"removefromblacklist?"+"reason="+reason+"&equipid="+equipid+"&operator="+operator;
+				
+				
+				String u=restTemplate.getForEntity(url, String.class).getBody();
+//			String u = patientService.updateSyslink(sl);
+			response.setCharacterEncoding("UTF-8");
+			ResultForLayui rfl=new ResultForLayui();
+			
+			response.getWriter().print(u);
+			return null;
+
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：重置密码
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/resetpassword",method=RequestMethod.GET)
+	public String resetpassword(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String id1 = request.getParameter("id1");
+			String equipid = request.getParameter("equipid");
+			String newpassword = request.getParameter("newpassword");
+
+			  String url=Dictionary.BathRestUrl+"resetpassword?"+"newpassword="+newpassword+"&equipid="+equipid;
+				
+				
+				String u=restTemplate.getForEntity(url, String.class).getBody();
+//			String u = patientService.updateSyslink(sl);
+			response.setCharacterEncoding("UTF-8");
+			ResultForLayui rfl=new ResultForLayui();
+			
+			response.getWriter().print(u);
+			return null;
+
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：审核状态变更
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/submitbytype",method=RequestMethod.GET)
+	public String submitbytype(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String id1 = request.getParameter("id1");
+			String equipid = request.getParameter("equipid");
+			String reason = request.getParameter("reason");
+			String type = request.getParameter("type");
+			String operator=WebUtils.getCurrUserName(request);
+			
+			  String url=Dictionary.BathRestUrl+"submitbytype?"+"reason="+reason+"&equipid="+equipid+"&type="+type+"&operator="+operator;
+				
+				
+				String u=restTemplate.getForEntity(url, String.class).getBody();
+//			String u = patientService.updateSyslink(sl);
+			response.setCharacterEncoding("UTF-8");
+			ResultForLayui rfl=new ResultForLayui();
+			
+			
+			
+			
+			String receiverId =equipid;
+			String receiverType = Dictionary.Value_2;
+			String title =null;
+			String content =null;
+			if(type.equals("2")) {
+				 title ="签到成功";
+				 content ="审核通过，签到成功";
+			}
+			if(type.equals("3")) {
+				 title ="签到失败";
+				 content ="审核拒绝，签到失败";
+			}
+			Object appResult;
+			appResult = restTemplate.postForObject("http://dialog/dialog/sendmessage?userId={1}&userType={2}&messageTitle={3}&messageContent={4}", null, Object.class, receiverId,receiverType, title, content);
+			String lm=((Map)((Map)appResult).get("status")).get("code").toString();
+			if(lm.equals(Dictionary.Value_200)) {
+//				response.getWriter().print(Dictionary.Result_Success);
+//				return null;
+			}
+			
+			
+			
+			
+			response.getWriter().print(u);
+			return null;
+
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：h5页面编辑
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/syslinkedit",method=RequestMethod.GET)
+	public String syslinkedit(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String maindataid = request.getParameter("maindataid");
+			String type = request.getParameter("type");
+			
+			if(null!=type&&type.equals(Dictionary.QueryType_Edit))
+			{
+				
+				  String url=Dictionary.BathRestUrl+"syslinkedit?"+"maindataid="+maindataid+"&edit=edit";
+					
+					
+				  List u=restTemplate.getForEntity(url, List.class).getBody();
+//				List<SysLink> u = patientService.getSyslinkId(maindataid,Dictionary.QueryType_Edit);
+				Object sl=u.get(0);
+				request.setAttribute("userInfo",sl);
+			return	getUrlPrefix(request)+Dictionary.pagepath+id;
+				
+			}
+
+			return null;
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：用户详情信息
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/patientedit",method=RequestMethod.GET)
+	public String patientedit(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String maindataid = request.getParameter("maindataid");
+			String type = request.getParameter("type");
+			
+			if(null!=type&&type.equals(Dictionary.QueryType_Edit))
+			{
+				
+				
+				  String urlp=Dictionary.BathRestUrl+"patienteditp?"+"maindataid="+maindataid;
+					
+					
+				  List u=restTemplate.getForEntity(urlp, List.class).getBody();
+				  
+				  String urlb=Dictionary.BathRestUrl+"patienteditb?"+"maindataid="+maindataid;
+					
+					
+				  List ub=restTemplate.getForEntity(urlb, List.class).getBody();
+				
+//				List<Patient> u = patientService.getPatientId(maindataid);
+//				List<SysBlacklist> ub = patientService.getSysBlacklistId(maindataid);
+				Object sl=u.get(0);
+				request.setAttribute("userInfo",sl);
+				request.setAttribute("userBlack",ub);
+			return	getUrlPrefix(request)+Dictionary.pagepath+id;
+				
+			}
+
+			return null;
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：诊后签到审核信息
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/dialogsignreviewedit",method=RequestMethod.GET)
+	public String dialogsignreviewedit(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String maindataid = request.getParameter("maindataid");
+			String type = request.getParameter("type");
+			
+			if(null!=type&&type.equals(Dictionary.QueryType_Edit))
+			{
+				
+				
+				  String url=Dictionary.BathRestUrl+"dialogsignreviewedit?"+"maindataid="+maindataid;
+					
+					
+				  List u=restTemplate.getForEntity(url, List.class).getBody();
+				  
+//				List u = patientService.getDialogSignReviewDetailId(maindataid);
+			//	List<SysBlacklist> ub = patientService.getSysBlacklistId(maindataid);
+				Object sl=u.get(0);
+				request.setAttribute("userInfo",sl);
+			//	request.setAttribute("userBlack",ub);
+			return	getUrlPrefix(request)+Dictionary.pagepath+id;
+				
+			}
+
+			return null;
+		}catch(Exception e){
+			logger.error("用户首页出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 * 张衡
+	 * 
+	 * 实现功能：发送消息
+	 * 
+	 * 
+	 */
+	@RequestMapping(value="/sendMsg",method=RequestMethod.GET)
+	public String sendMsg(HttpServletRequest request, HttpServletResponse response){
+		try{
+			String id = request.getParameter("id");
+			String receiverId =id;
+			String receiverType = Dictionary.Value_2;
+			String title = request.getParameter("title");
+			String content = request.getParameter("reason");
+				
+			Object appResult;
+			try {
+				appResult = restTemplate.postForObject("http://dialog/dialog/sendmessage?userId={1}&userType={2}&messageTitle={3}&messageContent={4}", null, Object.class, receiverId,receiverType, title, content);
+				String lm=((Map)((Map)appResult).get("status")).get("code").toString();
+				if(lm.equals(Dictionary.Value_200)) {
+					response.getWriter().print(Dictionary.Result_Success);
+					return null;
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				response.getWriter().print(Dictionary.Result_Fail);
+				return null;
+			}
+			
+	  	
+			
+			
+				
+
+			return null;
+		}catch(Exception e){
+			logger.error("系统出错",e);
+			request.setAttribute("error", e);
+			return forward(ERROR);
+		}
+	}
+
+}

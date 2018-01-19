@@ -1,0 +1,27 @@
+package com.yhyt.health.util;
+
+public class Dictionary {
+	
+	/*
+	 * 张衡
+	 * 
+	 * 常用的字典值
+	 * 
+	 * 
+	 */
+
+	public static  String pagepath="/";
+	
+	public static  String Result_Success="success";
+	
+	public static  String Result_Fail="fail";
+	
+	public static  String QueryType_Edit="edit";
+	
+//	public static  String BathRestUrl="http://10.117.10.27:9090/";
+	
+	public static  String BathRestUrl="http://newhealth/";
+	
+	public static  String Value_zero="0";
+	
+}

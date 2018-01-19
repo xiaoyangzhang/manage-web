@@ -1,0 +1,191 @@
+package com.yhyt.health.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.yhyt.health.configuration.WebPathConfiguration;
+import com.yhyt.health.model.ArticleDTO;
+import com.yhyt.health.model.DeptDisease;
+import com.yhyt.health.model.ItemClassification;
+import com.yhyt.health.model.dto.ItemBody;
+import com.yhyt.health.model.dto.ItemBodyReturnVo;
+import com.yhyt.health.model.dto.ItemQueryDTO;
+import com.yhyt.health.model.dto.ItemResultDTO;
+import com.yhyt.health.model.vo.DoctorDiseaseVO;
+import com.yhyt.health.result.AppResult;
+import com.yhyt.health.result.WebResult;
+import com.yhyt.health.util.Page;
+import com.yhyt.health.util.WebUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+
+@Controller
+@RequestMapping("/item")
+public class ItemController {
+    private static final  Logger logger = LoggerFactory.getLogger(DictWebController.class);
+
+    @Resource
+    private RestTemplate restTemplate;
+
+    @Resource
+    private WebPathConfiguration webPathConfiguration;
+
+    /**
+     * 点击商品管理菜单，进入商品管理页面
+     * @return
+     */
+    @RequestMapping("/itemAdd")
+    public ModelAndView itemAdd(){
+        ModelAndView model = new ModelAndView();
+        model.setViewName("/item/item-add");
+        return model;
+    }
+
+    /**
+     * 点击商品管理菜单，进入商品管理页面
+     * @return
+     */
+    @RequestMapping("/itemList")
+    public ModelAndView itemList(){
+        ModelAndView model = new ModelAndView();
+        model.setViewName("/item/item-list");
+        return model;
+    }
+
+    /**
+     * 点击商品分类，加载商品分类列表
+     * @return
+     */
+    @RequestMapping("/itemSort")
+    public ModelAndView itemSort(){
+        ModelAndView model = new ModelAndView();
+        model.setViewName("/item/item-sort");
+        return model;
+    }
+
+
+
+    /**
+     * 商品分页查询接口
+     * @return
+     */
+    @RequestMapping("/queryItemListPage")
+    @ResponseBody
+    public WebResult<ItemResultDTO> queryItemListPage(ItemQueryDTO itemQueryDTO){
+        WebResult<ItemResultDTO> result = new WebResult<>();
+        try {
+            Page list = restTemplate.getForObject(webPathConfiguration.getSystemUrl() + "/itemManage/queryItemListPage?itemQueryDTO={itemQueryDTO}", Page.class, JSON.toJSONString(itemQueryDTO));
+            result.setList(list.getResult());
+            result.setCount(list.getTotalRecord());
+            return result;
+        }catch (RestClientException e) {
+            result.setCode("500");
+            return result;
+        }
+    }
+
+    @RequestMapping("/getItemClassification")
+    public ModelAndView dictProvinceList(){
+        ModelAndView model = new ModelAndView();
+        List<ItemClassification> list = null;
+        try{
+            list = restTemplate.getForObject(webPathConfiguration.getSystemUrl() + "/itemManage/getItemClassification", List.class);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        model.addObject("classifications",list);
+        model.setViewName("/item/item-sort");
+        return model;
+    }
+
+    /**
+     * 点击商品编辑的接口 （根据商品id查询商品信息接口）
+     */
+    @RequestMapping("/getItemMessage/{id}")
+    @ResponseBody
+    public ItemBodyReturnVo getItemMessage(@PathVariable("id") long id){
+        ItemBodyReturnVo vo = null;
+        try{
+            vo = restTemplate.getForObject(webPathConfiguration.getSystemUrl() + "/itemManage/getItemMessage/"+id, ItemBodyReturnVo.class);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return vo;
+    }
+
+    /**
+     * 添加／修改商品信息
+     * @param itemBody
+     * @param request
+     * @return
+     */
+    @RequestMapping("/addItem")
+    @ResponseBody
+    public WebResult<String> addItem(@RequestBody ItemBody itemBody, HttpServletRequest request){
+
+        WebResult<String> result = new WebResult<String>();
+        //获取当前登陆后台用户
+        String currentName = WebUtils.getCurrUserName(request);
+        itemBody.setCreateOperator(currentName);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<ItemBody> httpEntity = new HttpEntity<ItemBody>(itemBody, headers);
+        try {
+            ResponseEntity<AppResult> responseEntity = restTemplate.postForEntity(webPathConfiguration.getDoctorUrl()+"/itemManage/addItem", httpEntity, AppResult.class);
+            result.setCode(responseEntity.getBody().getStatus().getCode());
+            result.setMsg(responseEntity.getBody().getStatus().getMessage());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 商品下架
+     * @param itemId
+     * @param state
+     * @return
+     */
+    @RequestMapping("/offshelfItem")
+    @ResponseBody
+    public  WebResult<String> offshelfItem(@RequestParam Long itemId,
+                                           @RequestParam Byte state){
+        WebResult<String> result = new WebResult<String>();
+
+        try {
+            ResponseEntity<AppResult> responseEntity = restTemplate.getForEntity(webPathConfiguration.getDoctorUrl()+"/itemManage/offshelfItem?itemId={1}&state={2}",AppResult.class,itemId,state);
+            result.setCode(responseEntity.getBody().getStatus().getCode());
+            result.setMsg(responseEntity.getBody().getStatus().getMessage());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}

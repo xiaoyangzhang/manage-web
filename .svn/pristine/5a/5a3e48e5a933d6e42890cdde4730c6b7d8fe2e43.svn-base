@@ -1,0 +1,132 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<%
+    String staticPath=request.getContextPath();
+%>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>添加科室分类</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <script src="http://libs.baidu.com/jquery/2.1.4/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="<%=staticPath%>/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="<%=staticPath%>/static/plugins/font-awesome/css/font-awesome.min.css">
+    <style type="text/css">
+        .layui-btn {height: 30px;line-height: 30px;font-size: 12px;margin-bottom: 5px;margin-left: 3px;}
+        .checked {background-color: #1279ff  }
+    </style>
+</head>
+
+<body>
+<input type="hidden" value="${questionnaireId}" id="questionnaireId" />
+<table class="layui-table">
+    <colgroup>
+        <col width="150"/>
+        <col width="300"/>
+
+    </colgroup>
+    <thead>
+    <tr class="">
+        <th>一级科室</th>
+        <th>二级科室</th>
+    </tr>
+    </thead>
+    <tbody class="">
+    <tr><td>通用</td><td class="second"><input type="button" class="layui-btn-primary" data-id="0" value="通用" /></td></tr>
+    <c:forEach items="${deptCategories}" var="dept" >
+    <tr><td>${dept.levelOneName}</td><td class="second">
+    <c:forEach items="${dept.levelTwoList}" var="dept2" >
+        <input type="button" data-id="${dept2.id}" value="${dept2.childName}" class="layui-btn-primary"/>
+    </c:forEach>
+    </td></tr>
+    </c:forEach>
+    </tbody>
+</table>
+<script type="text/html" id="deptTpl">
+    <%--<tbody>
+    <tr><td>通用</td><td>通用</td></tr>
+    {{# layui.each(d.list, function(index, item){ }}
+    <tr><td>item.levelOneName</td><td>
+        {{# layui.each(item.levelTwoList, function(index2, item2){ }}
+        <span data-id="item2.id">item2.childName</span>
+        {{# }); }}
+
+    </td></tr>
+    {{# }); }}
+    </tbody>--%>
+</script>
+<script type="text/javascript" src="<%=staticPath%>/static/plugins/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.use(['form','laytpl'], function() {
+        var form = layui.form(), laytpl = layui.laytpl;
+        $("table").find("input[type=button]").on('click',function () {
+            $(this).toggleClass("checked");
+        });
+//        $.ajax({
+            /*url:'<%=staticPath%>/toDeptCategory/'+parentCode,
+            type:'get',
+            dataType:'json',
+            success:function (result) {
+                $('#second').empty();
+                laytpl($('#secondTpl').html()).render(result,function (html) {
+                    $('#second').html(html);
+                });
+
+                if(childArr.length>0){//选中已选择的二级科室
+                    for(var i=0;i<childArr.length;i++){
+                        for(var j=0;j<$('#second input').length;j++){
+                            if(childArr[i].dictDepartmentId==$('#second input').eq(j).val()){
+                                $('#second input').eq(j).prop('checked',true);
+                            }
+                        }
+                    }
+                }*/
+
+                /*$('#second input').on('click',function () {
+                    var _this = $(this);
+                    if(_this.prop('checked')){
+                        childArr.push({
+                            departmentId:$('#deptId').val()==undefined?0:$('#deptId').val(),
+                            dictDepartmentLevel:2,
+                            dictDepartmentId:Number(_this.val()),
+                            name:_this.next("span").text()
+                        });
+                    }else{
+                        for(var i=0;i<childArr.length;i++){
+                            if(Number(_this.val())==childArr[i].dictDepartmentId){
+                                childArr.splice(i,1)
+                            }
+                        }
+                    }
+                })*/
+//            }
+//        });
+    });
+    var getParams=function () {
+        var questionnaireDepts=[];
+        $("table tbody").children("tr").children("td:last-child").find("input[type=button]").each(function () {
+            console.log("获取参数");
+            if($(this).hasClass("checked")){
+
+                var questionnaireDept={
+                    questionnaireId:$("#questionnaireId").val(),
+                    dictDepartmentId:$(this).data("id"),
+                    name:$(this).val()
+
+                };
+            questionnaireDepts.push(questionnaireDept);
+            }
+        });
+        return questionnaireDepts;
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+//package com.yhyt.health.controller;
+//
+//import com.yhyt.health.configuration.WebPathConfiguration;
+//import com.yhyt.health.model.ArticleDTO;
+//import com.yhyt.health.model.ArticleLogDTO;
+//import com.yhyt.health.model.query.ArticleQuery;
+//import com.yhyt.health.result.WebResult;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.stereotype.Controller;
+//import org.springframework.ui.Model;
+//import org.springframework.web.bind.annotation.PathVariable;
+//import org.springframework.web.bind.annotation.RequestBody;
+//import org.springframework.web.bind.annotation.RequestMapping;
+//import org.springframework.web.bind.annotation.ResponseBody;
+//import org.springframework.web.client.RestTemplate;
+//
+//@Controller
+//@RequestMapping("/article")
+//public class ArticleController {
+//
+//    private static Logger logger = LoggerFactory.getLogger(ArticleController.class);
+//
+//    @Autowired
+//    private RestTemplate restTemplate;
+//    @Autowired
+//    private WebPathConfiguration webPathConfiguration;
+//    @RequestMapping("/toAddArticle")
+//    public String toAddArticle(){
+//        return "/publish/addContent";
+//    }
+//
+//    /**
+//     *
+//     * @param id
+//     * @param type
+//     * @param action 1：查看 2：编辑 3：审核
+//     * @param model
+//     * @return
+//     */
+//    @RequestMapping("/toEditArticle/{id}/{type}/{action}")
+//    public String toEditArticle(@PathVariable("id")Long id, @PathVariable("type")Byte type,@PathVariable("action")Byte action, Model model){
+//        model.addAttribute("id",id);
+//        model.addAttribute("type",type);
+//        model.addAttribute("view",action);
+//        return "/publish/editContent";
+//    }
+//
+//    @RequestMapping("/toList/{type}")
+//    public String toList(@PathVariable("type")Byte type,Model model){
+//        if (1==type) return "/publish/physician-list";
+//        else if (2==type) return "/publish/topic-list";
+//        return "";
+//    }
+//
+//    @RequestMapping("/article/list")
+//    @ResponseBody
+//    public WebResult<ArticleDTO> queryArticleListPage(ArticleQuery articleQuery){
+//        WebResult<ArticleDTO> result = new WebResult<>();
+//        return result;
+//    }
+//
+//    @RequestMapping("/add/article")
+//    @ResponseBody
+//    public WebResult<String> addArticle(@RequestBody ArticleDTO articleDTO){
+//        WebResult<String> result = new WebResult<>();
+//        return result;
+//    }
+//
+//    @RequestMapping("/edit/article")
+//    @ResponseBody
+//    public WebResult<String> editArticle(@RequestBody ArticleDTO articleDTO){
+//        WebResult<String> result = new WebResult<>();
+//        return result;
+//    }
+//
+//    @RequestMapping("/update/article/state")
+//    @ResponseBody
+//    public WebResult<String> updateArticleState(@RequestBody ArticleLogDTO articleLogDTO){
+//        WebResult<String> result = new WebResult<>();
+//        return result;
+//    }
+//
+//}

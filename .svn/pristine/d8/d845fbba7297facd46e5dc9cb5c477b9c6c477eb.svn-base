@@ -1,0 +1,81 @@
+server: 
+  port: 80
+#  contextPath: /doctor
+
+spring:
+  application:
+    name: doctor
+#  jpa:
+#    generate-ddl: false
+#    show-sql: true
+  datasource:
+    username: xjk
+    password: xjk
+    url: jdbc:mysql://10.117.130.208:3336/xjk?useUnicode=true&characterEncoding=utf-8
+
+  redis:
+    database: 0    # Redis数据库索引（默认错误的Unicode字符串!
+    host: 10.117.130.210 # Redis服务器地址
+    port: 6379 # Redis服务器连接端口
+    password:  # Redis服务器连接密码（默认为空）
+    pool:
+      max-active: 8 #连接池最大连接数（使用负值表示没有限制）
+      max-wait: 1 # 连接池最大阻塞等待时间（使用负值表示没有限制）
+      max-idle: 8 # 连接池中的最大空闲连接
+      min-idle: 0 # 连接池中的最小空闲连接
+    timeout: 0 # 连接超时时间（毫秒）
+    sentinel:
+      master: mymaster #name of Redis server  !
+      nodes: 10.117.130.210:26379,10.117.130.204:26379 #哨兵的配置列表
+
+  http:
+    multipart:
+      enabled: true
+      max-file-size: 30MB
+      max-request-size: 30MB
+#  jackson:
+#        time-zone: GMT+8
+#        date-format: yyyy-MM-dd HH:mm
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://10.117.130.204:8000/eureka/,http://10.117.130.210:8000/eureka/
+  instance:
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 30
+
+swagger: 
+   enable: true
+constant:
+  im:
+    url: http://172.30.0.231:8092/tiguser/
+    imOperUrl: http://172.30.0.231:8092/mucroom
+    roomAdd: http://dialog/dialog/room/add
+    givecardforfree: http://system/patient/orders/giveOrder
+
+im:
+  server:
+    roomUrl: http://172.30.0.231:8092/mucroom/add
+    userAdd: http://172.30.0.231:8092/mucroom/join
+    prefix: muc.114.113.117.243
+
+fdfs:
+   soTimeout: 15000
+   connectTimeout: 6000
+   thumbImage:
+       width: 150
+       height: 150
+   trackerList:
+   - 10.117.130.108:22122
+   - 10.117.130.204:22122
+url:
+  doctorUrl: http://doctor/
+  patientUrl: http://patient/
+  systemUrl: http://system/
+  gateWay: https://api.cis95132.com:8000/
+  newhealthUrl: http://newhealth/
+  qrCode: /testRelease/qrCode/

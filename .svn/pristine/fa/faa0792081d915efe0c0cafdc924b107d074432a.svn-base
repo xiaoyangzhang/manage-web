@@ -1,0 +1,19 @@
+package com.yhyt.health.util;
+
+import javax.servlet.http.HttpServletRequest;
+
+public class WebUtils {
+
+//    @Autowired
+//    private SysUserService sysUserService;
+//
+//    public static String getCurrUserName(HttpServletRequest request){
+//        Long userId= (Long) request.getSession().getAttribute("userId");
+//
+//    }
+
+    public static Long getCurrUserId(HttpServletRequest request){
+        Long userId= (Long) request.getSession().getAttribute("userId");
+        return userId;
+    }
+}

@@ -1,0 +1,42 @@
+package com.yhyt.health.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.yhyt.health.model.SysFeedback;
+
+/**
+ * 意见投诉
+ * @author localadmin
+ *
+ */
+@RequestMapping("/sysPage")
+@Controller
+public class FeedbackController {
+
+	/**
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/feedback/{useType}")
+	public ModelAndView feedbackListByType(SysFeedback feedback){
+		ModelAndView view  = new ModelAndView();
+		view.setViewName("/feedback/feedbackList");
+		view.addObject("feedback", feedback);
+		return view;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	@RequestMapping("/feedback")
+	public ModelAndView feedbackList(SysFeedback feedback){
+		ModelAndView view  = new ModelAndView();
+		view.setViewName("/feedback/feedbackList");
+		view.addObject("feedback", feedback);
+		return view;
+	}
+	
+}

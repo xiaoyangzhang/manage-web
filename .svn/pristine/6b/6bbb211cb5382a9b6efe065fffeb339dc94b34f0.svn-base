@@ -1,0 +1,803 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="false" pageEncoding="utf-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+<%
+    String staticPath=request.getContextPath();
+    String gateWay = (String) request.getAttribute("gateWay");
+    String servicePath = gateWay+"/system";
+%>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>创建新内容</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <script src="http://libs.baidu.com/jquery/2.1.4/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="<%=staticPath%>/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="<%=staticPath%>/static/plugins/font-awesome/css/font-awesome.min.css">
+    <style type="text/css">
+        .content-item{background-color: #f2f2f2;margin-bottom: 5px;padding: 10px 0;}
+        .content-item>p{padding: 0 37px;}
+        .preViewWrap h2{padding: 0 10px;text-align: center; font-size:14px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;height: 40px;line-height: 40px;}
+        .preViewWrap img{display: block;max-width: 100%;margin:0 auto;}
+        table,tr,td,th{border: 1px solid #ccc;}
+    </style>
+</head>
+<body style="padding: 10px;">
+<form class="layui-form" action="">
+    <input type="hidden" value="${id}" id="articleId">
+    <div class="layui-form-item">
+        <label class="layui-form-label">发布端</label>
+        <div class="layui-input-block">
+            <input type="radio" name="source" value="1"  title="新医疗" disabled checked="checked" class="layui-disabled">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">发布位置</label>
+        <div class="layui-input-block">
+            <input type="radio" name="type" disabled <c:if test="${article.type==1}">checked</c:if> value="1" title="医师培训" >
+            <input type="radio" name="type" disabled value="2" <c:if test="${article.type==2}">checked</c:if>  title="参与课题" >
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">发布对象</label>
+        <div class="layui-input-block" id="dept">
+            <c:if test="${article.isAllDepartment==1}">
+                <input type="radio" name="isAllDepartment" checked   value="1" title="全部科室">
+                <input type="radio" name="isAllDepartment" value="2" title="自定义">
+                <input type="button" class="layui-btn layui-btn-small layui-btn-normal" id="selectDep" disabled value="选择科室">
+            </c:if>
+            <c:if test="${article.isAllDepartment==2}">
+                <input type="radio" name="isAllDepartment"  value="1" title="全部科室">
+                <input type="radio" name="isAllDepartment" checked  value="2" title="自定义">
+                <input type="button" class="layui-btn layui-btn-small layui-btn-normal" id="selectDep" value="选择科室">
+            </c:if>
+        </div>
+        <div class="departCon"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">发布地区</label>
+        <div class="layui-input-block" id="area">
+            <c:if test="${article.isAllArea==1}">
+                <input type="radio" name="isAllArea" value="1" checked title="全国">
+                <input type="radio" name="isAllArea" value="2" title="自定义">
+                <input type="button" class="layui-btn layui-btn-small layui-btn-normal" id="selectPro" disabled value="选择省份">
+            </c:if>
+            <c:if test="${article.isAllArea==2}">
+                <input type="radio" name="isAllArea" value="1" title="全国">
+                <input type="radio" name="isAllArea" value="2" checked title="自定义">
+                <input type="button" class="layui-btn layui-btn-small layui-btn-normal" id="selectPro" value="选择省份">
+            </c:if>
+        </div>
+        <div class="areaCon"></div>
+    </div>
+    <h2 style="padding: 0 37px;">编辑内容</h2>
+    <div class="content-item">
+        <p>内容入口自定义</p>
+        <div class="layui-form-item">
+            <label class="layui-form-label">标题</label>
+            <div class="layui-input-block">
+                <input type="text" name="title" lay-verify="title" value="${article.title}" autocomplete="off" placeholder="请输入标题，50字以内" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label layui-form-label-lg">导图</label>
+            <div class="layui-input-inline">
+                <div class="site-demo-upload">
+                    <img width="150px" height="150px" class="guidePic" <c:if test="${article.guidePic!=null && article.guidePic.length()>0}">src='${article.guidePic}'</c:if>  >
+                    <div class="site-demo-upbar">
+                        <input type="file" lay-method="post" name="file" lay-title="请上传小于100K的图片" lay-type="images" class="layui-upload-file" id="upload">
+                        <input type="hidden" name="guidePic" value="${article.guidePic}">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">是否置顶</label>
+            <div class="layui-input-block" style="height: 36px;">
+                <input type="checkbox" lay-skin="primary" <c:if test="${article.isTop==2}">checked</c:if>  name="isTop" value="on" title="是">
+            </div>
+        </div>
+    </div>
+    <div class="content-item" id="content">
+        <p>内容详情<a class="layui-btn layui-btn-small layui-btn-normal pull-right" id="preView">预览</a></p>
+        <div class="layui-form-item" >
+            <div class="layui-input-block">
+                <input type="radio" name="isQuote" <c:if test="${article.isQuote==2}">checked</c:if>   value="2" title="引用web">
+                <c:if test="${article.isQuote==1}">
+                    <input type="text" style="display: none;" name="quoteUrl" value="${article.quoteUrl}" placeholder="请输入有效的web链接" class="layui-input" >
+                </c:if>
+                <c:if test="${article.isQuote==2}">
+                    <input type="text"  name="quoteUrl" value="${article.quoteUrl}" placeholder="请输入有效的web链接" class="layui-input" >
+                </c:if>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <input type="radio"  name="isQuote" <c:if test="${article.isQuote==1}">checked</c:if>     value="1" title="自定义编辑">
+                <c:if test="${article.isQuote==1}">
+                <div class="defineCon">
+                    <div class="site-demo-upload">
+                        <img width="150px" height="150px" class="addImg" <c:if test="${article.titlePic!=null && article.titlePic.length()>0}">src='${article.titlePic}'</c:if>  >
+                        <div class="site-demo-upbar">
+                            <input type="file" lay-method="post" name="file" lay-title="请上传小于100K的图片" lay-type="images" class="layui-upload-file" id="addImg">
+                            <input type="hidden" name="titlePic" value="${article.titlePic}">
+                        </div>
+                    </div>
+                    <input type="text" name="subtitle" value="${article.subtitle}" placeholder="请输入标题" class="layui-input" >
+                    <div id="editor">
+                        <%--<textarea class="layui-textarea layui-hide" name="body" lay-verify="body" id="LAY_editor"></textarea>--%>
+                    </div>
+                </div>
+                </c:if>
+                <c:if test="${article.isQuote==2}">
+                    <div class="defineCon" style="display: none;">
+                        <div class="site-demo-upload">
+                            <img width="150px" height="150px" class="addImg" <c:if test="${article.titlePic!=null && article.titlePic.length()>0}">src='${article.titlePic}'</c:if>  >
+                            <div class="site-demo-upbar">
+                                <input type="file" lay-method="post" name="file" lay-title="请上传小于3M的图片" lay-type="images" class="layui-upload-file" id="addImg">
+                                <input type="hidden" name="titlePic" value="${article.titlePic}">
+                            </div>
+                        </div>
+                        <input type="text" name="subtitle" value="${article.subtitle}" placeholder="请输入标题" class="layui-input" >
+                        <div id="editor">
+                                <%--<textarea class="layui-textarea layui-hide" name="body" lay-verify="body" id="LAY_editor"></textarea>--%>
+                        </div>
+                    </div>
+                </c:if>
+            </div>
+        </div>
+        <div class="layui-inline" style="display:block;">
+            <label class="layui-form-label">上架时间</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" id="startDate" name="onlineDay" value="<fmt:formatDate value='${article.onlineDay}' pattern='yyyy-MM-dd' />" placeholder="yyyy-MM-dd" onclick="layui.laydate({elem: this, istime: true, format: 'YYYY-MM-DD'})">
+            </div>
+            0点00:00
+        </div>
+        <div class="layui-inline" style="display:block;">
+            <label class="layui-form-label">下架时间</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" id="endDate" name="offlineDay" value="<fmt:formatDate value='${article.offlineDay}' pattern='yyyy-MM-dd' />"  placeholder="yyyy-MM-dd" onclick="layui.laydate({elem: this, istime: true, format: 'YYYY-MM-DD'})">
+            </div>
+            23点59:59
+        </div>
+    </div>
+    <%--<c:if test="${action=='review'}">--%>
+    <div class="" style="width: 100%;">
+        <table class="layui-table">
+            <thead>
+                <th width="20%">时间</th>
+                <th width="20%">操作人</th>
+                <th width="60%">描述</th>
+            </thead>
+            <tbody>
+            <c:forEach items="${articleLogs}" var="log">
+
+                <tr>
+                    <td><fmt:formatDate value='${log.operateTime}' pattern='yyyy-MM-dd HH:mm:ss' /></td>
+                    <td>${log.operator}</td>
+                    <td>${log.reason}</td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+    </div>
+    <div id="buttonDiv">
+        <c:if test="${action=='edit'}">
+            <div>
+                <a href="javascript:history.back(-1);" style="float: left" id="back" class="layui-btn layui-btn-normal">返回</a>
+                <button class="layui-btn btn-submit" lay-submit lay-filter="submit">立即提交</button>
+            </div>
+        </c:if>
+    </div>
+    <%--</c:if>--%>
+</form>
+        <c:if test="${action=='review'}">
+            <div class="" style="float: right;padding: 10px 30px">
+                <button class="layui-btn layui-btn-danger review" id="refuse">拒绝</button>
+                <button class="layui-btn review" id="agree">通过</button>
+            </div>
+        </c:if>
+<div style="display: none" id="refuseDiv">
+    <%--<form class="layui-form layui-form-mid">--%>
+        <label class="layui-form-label layui-form-label-lg" >拒绝原因</label>
+        <div class="layui-input-inline">
+            <textarea class="layui-textarea" lay-verify="reason"  name="reason" style="width: 350px;height: 100px;resize: none;"></textarea>
+        </div>
+        <button lay-filter="refuse" style="display: none;"></button>
+    <%--</form>--%>
+</div>
+<div class="preViewWrap" style="display: none;">
+    <h2></h2>
+    <img src="" alt="">
+    <div></div>
+</div>
+<script type="text/javascript" src="<%=staticPath%>/static/plugins/layui/layui.js"></script>
+<script type="text/javascript" src="<%=staticPath%>/static/plugins/wangEditor/release/wangEditor.min.js"></script>
+<script>
+    //保存科室数组
+    var articleDept='${articleDepts}';
+    var deptParams=JSON.parse(articleDept);
+    var articleArea='${articleAreas}';
+    var areaParams=JSON.parse(articleArea);
+    var isQuote = '${article.isQuote}';//默认内容详情是引用外部链接
+
+    var globalAction='${action}';
+    layui.use(['form', 'layedit', 'laydate','jquery','upload','layer'], function(){
+        var form = layui.form(),
+            laydate = layui.laydate,
+            upload=layui.upload,
+            laytpl=layui.laytpl,
+            layedit = layui.layedit,
+        layerTips = parent.layer === undefined ? layui.layer : parent.layer;//获取父窗口的layer对象
+        /*if ("review"==globalAction){
+
+        }*/
+
+        //日期控制
+        var start = {
+            min: laydate.now()
+            ,max: '2099-06-16 23:59:59'
+            ,istoday: false
+            ,choose: function(datas){
+                end.min = datas; //开始日选好后，重置结束日的最小日期
+                end.start = datas //将结束日的初始值设定为开始日
+            }
+        };
+
+        var end = {
+            min: laydate.now()
+            ,max: '2099-06-16 23:59:59'
+            ,istoday: false
+            ,choose: function(datas){
+                start.max = datas; //结束日选好后，重置开始日的最大日期
+            }
+        };
+
+        document.getElementById('startDate').onclick = function(){
+            start.elem = this;
+            laydate(start);
+        };
+        document.getElementById('endDate').onclick = function(){
+            end.elem = this;
+            laydate(end);
+        };
+        //上传导图
+        layui.upload({
+            elem:'#upload',
+            url:'<%=staticPath%>/img/upload',
+            ext:'jpg|png|jpeg|gif',
+            method:"post",
+            before:function (input) {
+                var size=$("#upload")[0].files[0].size;
+                if (size>100*1024){
+                    layerTips.msg("请上传小于100K的图片",{icon:5});
+                    return false;
+                }
+            },
+            success:function (res) {
+                if (res.code!=200){
+                    layerTips.msg("请上传小于100K的图片",{icon:5});
+                }else {
+                    $("img.guidePic").attr("src", res.entity);
+                    $('input[name=guidePic]').val(res.entity);
+                }
+            },
+            error:function (index,upload) {
+                layerTips.msg("上传导图失败",{icon:2});
+            }
+
+        });
+        //添加题图
+        layui.upload({
+            elem:'#addImg',
+            url:'<%=staticPath%>/img/upload',
+            ext:'jpg|png|jpeg|gif',
+            method:"post",
+            before:function (input) {
+                var size=$("#addImg")[0].files[0].size;
+                if (size>200*1024){
+                    layerTips.msg("请上传小于200K的图片",{icon:5});
+                    return false;
+                }
+            },
+            success:function (res) {
+                if (res.code!=200){
+                    layerTips.msg("请上传小于200K的图片",{icon:5});
+                }else {
+                    $("img.addImg").attr("src", res.entity);
+                    $('input[name=titlePic]').val(res.entity);
+                }
+            },
+            error:function (index,upload) {
+                layerTips.msg("上传题图失败",{icon:2});
+            }
+        });
+
+        //创建一个编辑器
+        var E = window.wangEditor;
+        var editor = new E('#editor');
+        editor.create();
+        //回显 body部分
+        var body='${article.body}';
+        editor.txt.html(body);
+        //回显科室标签
+
+        function extractedDepts() {
+            var html = "";
+            if(articleDept != null && articleDept.length>0) {
+                articleDept = JSON.parse(articleDept);
+                for (var i = 0; i < articleDept.length; i++) {
+                    html += '<span style="margin:5px;display: inline-block;"><input type="hidden"  value="' + articleDept[i].dictDepartmentId + '"/><a  href="javascript:"  class="layui-btn layui-btn-danger layui-btn-xs delDepartment" >' + articleDept[i].name + '<i class="layui-icon">&#xe640;</i></a></span>';
+                }
+            }
+
+            $('.departCon').append(html);
+
+        }
+        extractedDepts();
+        //回显地区标签
+
+        function extractedAreas() {
+            var html = "";
+            if( articleArea != null && articleArea.length>0) {
+                articleArea = JSON.parse(articleArea);
+                for (var i = 0; i < articleArea.length; i++) {
+                    html += '<span style="margin:5px;display: inline-block;"><input type="hidden"  value="' + articleArea[i].dictCityFirstlevelId + '"/><a  href="javascript:"  class="layui-btn layui-btn-danger layui-btn-xs delDepartment" >' + articleArea[i].name + '<i class="layui-icon">&#xe640;</i></a></span>';
+                }
+            }
+
+            $('.areaCon').append(html);
+
+        }
+        extractedAreas();
+        layedit.set({
+            uploadImage: {
+                url: '<%=staticPath%>/img/upload' //接口url
+                ,type: 'POST' //默认post
+            }
+        });
+        //创建一个编辑器
+        var editIndex = layedit.build('LAY_editor');
+        form.verify({
+            title: function(value) {
+                if(value.length >50) {
+                    return '标题最多50个字符';
+                }
+            },
+            /*strongpoint:function (value) {
+                if(value.length >200) {
+                    return '最多200个字符';
+                }
+            },*/
+            content: function(value) {
+                layedit.sync(editIndex);
+            }
+        });
+        //提交表单
+        form.on('submit(submit)', function(data) {
+            if (data.field.isQuote==2){
+                if (!data.field.quoteUrl || data.field.quoteUrl.length<=0) {
+                    layerTips.msg("请输入内容链接", {icon: 5});
+                    return false;
+                }
+            }else if(data.field.isQuote==1){
+                if(!editor.txt.text() || editor.txt.text().length<=0){
+                    layerTips.msg("请输入内容正文",{icon:5});
+                    return false;
+                }
+            }
+            if (!data.field.onlineDay ||data.field.onlineDay.length<=0){
+                layerTips.msg("请选择上架时间",{icon:5});
+                return false;
+            }
+            if (!data.field.offlineDay ||data.field.offlineDay.length<=0){
+                layerTips.msg("请选择下架时间",{icon:5});
+                return false;
+            }
+            var today = new Date();
+            var todayStr=today.getFullYear()+"/"+(today.getMonth()+1)+"/"+today.getDate();
+            var on = new Date(data.field.onlineDay.replace(/-/g, "/"));
+            var off = new Date(data.field.offlineDay.replace(/-/g, "/"));
+            if (on<new Date(todayStr)) {
+                layerTips.msg("上架时间不能小于当前时间",{icon:5});
+                return false;
+            }
+            if(on > off)
+            {
+                layerTips.msg("下架时间不能小于上架时间",{icon:5});
+                return false;
+            }
+            var article={
+                id:$("#articleId").val(),
+              source:data.field.source,
+              type:data.field.type,
+                title:data.field.title,
+                subtitle:data.field.subtitle,
+                guidePic:$("input[name=guidePic]").val(),
+                titlePic:$("input[name=titlePic]").val(),
+                isTop:data.field.isTop=='on'?2:1,
+                isQuote:data.field.isQuote,
+                quoteUrl:data.field.quoteUrl,
+                body:editor.txt.html(),
+                onlineDay:data.field.onlineDay,
+                offlineDay:data.field.offlineDay
+
+
+            };
+            //对象
+            if (data.field.isAllDepartment==1) article.isAllDepartment=1;
+            else if (data.field.isAllDepartment==2) {
+                article.isAllDepartment=2;
+                var articleDepartments=[];
+                    $('.departCon').children("span").each(function () {
+                        var $this=$(this);
+                        var articleDepartment={
+                            articleId:$("#articleId").val(),
+                            dictDepartmentId:$this.find("input[type=hidden]").val()
+                        };
+                        articleDepartments.push(articleDepartment);
+                    });
+                data.field.articleDepartments=articleDepartments;
+                if (!data.field.articleDepartments || data.field.articleDepartments.length<0){
+                    layerTips.msg("请选择发布对象",{icon:5});
+                    return false;
+                }
+            }
+            //地区
+            if (data.field.isAllArea==1) article.isAllArea=1;
+            else if (data.field.isAllArea==2) {
+                article.isAllArea=2;
+                var articleAreas=[];
+                    $('.areaCon').children("span").each(function () {
+                        var $this=$(this);
+                        var articleArea={
+                            articleId:$("#articleId").val(),
+                            dictCityFirstlevelId:$this.find("input[type=hidden]").val()
+                        };
+                        articleAreas.push(articleArea);
+                    });
+                data.field.articleAreas=articleAreas;
+                if (!data.field.articleAreas || data.field.articleAreas.length<0){
+                    layerTips.msg("请选择发布地区",{icon:5});
+                    return false;
+                }
+            }
+            if (!data.field.articleDepartments || data.field.articleDepartments.length==0) article.isAllDepartment=1;
+            else article.isAllDepartment=2;
+            if (!data.field.articleAreas || data.field.articleAreas.length==0) article.isAllArea=1;
+            else article.isAllArea=2;
+            data.field.article=article;
+            $(".btn-submit").prop("disabled","disabled");
+            $.ajax({
+                url:'<%=staticPath%>/publish/edit/article',
+                type:'post',
+                data:JSON.stringify(data.field),
+                dataType:'json',
+                contentType:'application/json',
+                success:function (result) {
+                    if (result.code==200){
+                        layerTips.msg("编辑内容成功,请审核员审核",{icon:1});
+                        location.href=history.back(-1);
+                    }
+                    else if(result.code==501) {
+                        layerTips.msg(result.msg, {icon: 2});
+                        $(".btn-submit").prop("disabled", "");
+                    }
+                else {
+                        layerTips.msg("编辑内容失败",{icon:2});
+                        $(".btn-submit").prop("disabled","");
+
+                    }
+                },
+                error:function (result) {
+                    layerTips.msg("编辑内容失败",{icon:2});
+                    $(".btn-submit").prop("disabled","");
+
+
+                }
+            });
+            return false;
+        });
+
+
+        var selectDep = $('#selectDep'),selectPro = $('#selectPro'),preView = $('#preView');
+        //发布对象
+        $('#dept div.layui-form-radio').on('click',function () {
+           var _index = $(this).index();
+            if(_index==1){
+                selectDep.attr('disabled',true);
+                articleDept = "";
+                deptParams = [];
+                $('.departCon').html('');
+            }else{
+                selectDep.removeAttr("disabled");
+            }
+        });
+        //选择科室
+        selectDep.on('click',function () {
+            layer.open({
+                type:2,
+                title:'选择科室',
+                content:"<%=staticPath%>/publish/toArticle/dept",
+                area:['800px','500px'],
+                offset: ['50px', '15%'],
+                shadeClone:true,
+                btn:['确认','取消'],
+                yes:function (index,layero) {
+                    $('.departCon span').remove();
+                    var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：
+                    deptParams=iframeWin.getParams();
+                    console.log(deptParams);
+                    var html="";
+                    for (var i=0;i<deptParams.length;i++){
+                        html+='<span style="margin:5px;display: inline-block;"><input type="hidden" value="'+deptParams[i].dictDepartmentId+'"/><a  href="javascript:"  class="layui-btn layui-btn-danger layui-btn-xs delDepartment" >'+deptParams[i].name+'<i class="layui-icon">&#xe640;</i></a></span>';
+                    }
+
+                    $('.departCon').append(html);
+                    $('.departCon').children("span").find("a").each(function () {
+                        var $that=$(this);
+                        $that.on('click',function () {
+                            for(var i=0;i<deptParams.length;i++){
+                                if(Number($that.parent("span").find('input').val())==deptParams[i].dictDepartmentId){
+                                    deptParams.splice(i,1);
+                                }
+                            }
+                            $that.parent("span").remove();
+                            deptParams.splice(i,1);
+                        })
+                    });
+                    layer.close(index);
+                },
+                success:function (layero,index) {
+
+                },
+                cancel:function (index,layero) {
+                    layer.close(index);
+                }
+            });
+        });
+
+        //发布area
+        $('#area div.layui-form-radio').on('click',function () {
+            var _index = $(this).index();
+            if(_index==1){
+                selectPro.attr('disabled',true);
+                articleArea = "";
+                areaParams = [];
+                $('.areaCon').html('');
+            }else{
+                selectPro.removeAttr("disabled");
+            }
+        });
+        //选择地区
+        selectPro.on('click',function () {
+            layer.open({
+                type:2,
+                title:'选择地区',
+                content:"<%=staticPath%>/cityPage/province",
+                area:['800px','300px'],
+                offset: ['50px', '15%'],
+                shadeClone:true,
+                btn:['确认','取消'],
+                yes:function (index,layero) {
+                    $('.areaCon span').remove();
+                    var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：
+                    areaParams=iframeWin.getParams();
+                    var html="";
+                    for (var i=0;i<areaParams.length;i++){
+                        html+='<span style="margin:5px;display: inline-block;"><input type="hidden" value="'+areaParams[i].dictCityFirstlevelId+'"/><a  href="javascript:"  class="layui-btn layui-btn-danger layui-btn-xs delDepartment" >'+areaParams[i].name+'<i class="layui-icon">&#xe640;</i></a></span>';
+                    }
+
+                    $('.areaCon').append(html);
+                    $('.areaCon').children("span").find("a").each(function () {
+                        var $that=$(this);
+                        $that.on('click',function () {
+                            for(var i=0;i<areaParams.length;i++){
+                                if(Number($that.parent("span").find('input').val())==areaParams[i].dictCityFirstlevelId){
+                                    areaParams.splice(i,1);
+                                }
+                            }
+                            $that.parent("span").remove();
+                            areaParams.splice(i,1);
+                        })
+                    });
+                    layer.close(index);
+                },
+                success:function (layero,index) {
+
+                },
+                cancel:function (index,layero) {
+                    layer.close(index);
+                }
+            });
+        });
+        //审核拒绝
+        $('#refuse').on('click',function () {
+            layer.open({
+                type:1,
+                area:['500px','300px'],
+                content:$('#refuseDiv').html(),
+                shadeClose:true,
+                btn:['确认','取消'],
+                title:'审核拒绝',
+                offset:'50px',
+                yes:function (index,layero) {
+                    // $('#refuseDiv').find('button[lay-filter=refuse]').click();
+                        var reason=$(layero).find('textarea[name=reason]').val();
+                        if(reason == undefined || reason ==null ||reason.length==0){
+                            layerTips.msg( '请输入拒绝原因。',{icon:5});
+                            return false;
+                        }
+                        if(reason.length > 255) {
+                            layerTips.msg( '拒绝原因不能超过255字',{icon:5});
+                            return false;
+                        }
+                        $("button .review").prop("style","display:none");
+                        $.ajax({
+                            url:'<%=staticPath%>/publish/update/article/state',
+                            type:'post',
+                            dataType:'json',
+                            contentType:'application/json',
+                            data: JSON.stringify({
+                                articleId:$("#articleId").val(),
+                                reason:reason,
+                                state:5
+                            }),
+                            success:function (result) {
+                                if (result.code=='200'){
+
+                                    // var index1 = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+                                    // parent.layer.close(index1); //再执行关闭
+                                    layerTips.msg("审核成功",{icon:1});
+                                    layer.close(index);
+                                    location.href=history.back(-1);
+                                }else if(result.code==501) {
+                                    layerTips.msg(result.msg, {icon: 5});
+                                    $("button .review").prop("style", "");
+                                }
+
+                            else{
+                                    layerTips.msg("审核失败",{icon:2});
+                                    $("button .review").prop("style","");
+
+                                }
+
+                            },
+                            error:function (result) {
+                                layerTips.msg("审核失败",{icon:2});
+                                $("button .review").prop("style","");
+
+                            }
+                    });
+                },
+                success:function (layero,index) {
+                    var form=layui.form();
+                    // form.render();
+                    // form.on('submit(refuse)',function (data) {
+                    //     });
+                },
+                cancel:function (index,layero) {
+                    layer.close(index);
+                }
+
+            });
+        });
+//审核通过
+        $('#agree').on('click',function () {
+            $("button .review").prop("style","display:none");
+            $.ajax({
+                url:'<%=staticPath%>/publish/update/article/state',
+                type:'post',
+                dataType:'json',
+                contentType:'application/json',
+                data: JSON.stringify({
+                    articleId:$("#articleId").val(),
+                    state:8
+                }),
+                success:function (data) {
+                    if (data.code=='200'){
+
+                        //假设这是iframe页
+                        // var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+                        // parent.layer.close(index); //再执行关闭
+                        layerTips.msg("审核成功",{icon:1});
+                        location.href=history.back(-1);
+
+
+                    }else if(data.code==501) {
+                        layerTips.msg(data.msg, {icon: 5});
+                        $("button .review").prop("style", "");
+                    }
+                    else{
+                        layerTips.msg("审核失败",{icon:2});
+                        $("button .review").prop("style","");
+
+                    }
+                },
+                error:function (data) {
+                    layerTips.msg("审核失败",{icon:2});
+                    $("button .review").prop("style","");
+
+                }
+            });
+        });
+
+
+
+    //内容详情
+        //内容详情
+        $('#content div.layui-form-radio').on('click',function () {
+            var _index = $(this).parents('.layui-form-item').index();
+            if(_index==1){
+                isQuote = 1;//引用外部链接
+                $('.defineCon').prop('style',"display:none");
+                $('input[name=quoteUrl]').prop('style',"");
+            }else{
+                isQuote = 2;//编辑自定义内容
+                $('.defineCon').prop('style',"");
+                $('input[name=quoteUrl]').prop('style',"display:none");
+            }
+            /*$('input[name=quoteUrl]').val('');
+            $("img.addImg").removeAttr("src");
+            $('input[name=titlePic]').val('');
+            $('input[name=subtitle]').val('');
+            editor.txt.clear();*/
+        });
+    /*$("#content div.layui-form-radio").on('click',function () {
+        var _index = $(this).index("input[name=quoteUrl]");
+        if(_index==1){
+            $(".defineCon").prop('style',"display:none");
+            $("input[name=quoteUrl]").prop('style',"");
+        }else{
+            $("input[name=quoteUrl]").prop('style',"display:none");
+            $(".defineCon").prop('style',"");
+
+        }
+    });*/
+        //预览
+        preView.on('click',function () {
+            if(isQuote==2){
+                var url = $('input[name=quoteUrl]').val();
+                var match = /^https:\/\/([\w\-]+(\.[\w\-]+)*\/)*[\w\-]+(\.[\w\-]+)*\/?(\?([\w\-\.,@?^=%&:\/~\+#]*)+)?/;
+                if(url&&match.test(url)){
+//                    window.open(url);
+                    layer.open({
+                        type: 2,
+                        title: '预览',
+                        shadeClose: true,
+                        shade: 0.3,
+                        offset: '50px',
+                        area: ['320px', '90%'],
+                        content: url
+                    });
+                }else{
+                    layerTips.alert('请填写有效的web链接。', {offset: '100px',icon: 5});
+                }
+            }else{
+                var preViewWrap = $('.preViewWrap');
+                preViewWrap.children('h2').text($('input[name=subtitle]').val());
+                preViewWrap.children('img').attr('src',$("img.addImg").attr("src"));
+                preViewWrap.children('div').html(editor.txt.html());
+                layer.open({
+                    type: 1,
+                    title: '预览',
+                    shadeClose: true,
+                    shade: 0.3,
+                    offset: '50px',
+                    area: ['320px', '90%'],
+                    content: preViewWrap
+                });
+            }
+        });
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,509 @@
+package com.yhyt.health.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.github.pagehelper.PageInfo;
+import com.github.tobato.fastdfs.domain.StorePath;
+import com.github.tobato.fastdfs.service.FastFileStorageClient;
+import com.yhyt.health.configuration.WebPathConfiguration;
+import com.yhyt.health.model.Department;
+import com.yhyt.health.model.DeptDictDept;
+import com.yhyt.health.model.DeptDisease;
+import com.yhyt.health.model.DeptDoctor;
+import com.yhyt.health.model.dto.DepartmentDTO;
+import com.yhyt.health.model.query.DiseaseQuery;
+import com.yhyt.health.model.query.DoctorDiseaseQuery;
+import com.yhyt.health.model.vo.DepartmentVO;
+import com.yhyt.health.model.vo.DeptCategoryVO;
+import com.yhyt.health.model.vo.DeptDiseaseVO;
+import com.yhyt.health.model.vo.DoctorVO;
+import com.yhyt.health.result.AppResult;
+import com.yhyt.health.result.WebResult;
+import com.yhyt.health.util.Page;
+import com.yhyt.health.util.QrCodeCreateUtil;
+import com.yhyt.health.util.WebUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.util.List;
+import java.util.Map;
+
+@Controller
+@RequestMapping("/department")
+public class DepartmentController {
+
+    private static Logger logger = LoggerFactory.getLogger(DepartmentController.class);
+
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private FastFileStorageClient storageClient;
+    @Autowired
+    private WebPathConfiguration webPathConfiguration;
+    @RequestMapping("toDepartmentList/{id}")
+    public String toDepartmentList(@PathVariable("id")long id, Model model) {
+        model.addAttribute("id",id);
+        return "/hospital/hospital-department";
+    }
+
+    /**
+     * 医院下的科室列表
+     * @param id
+     * @return
+     */
+    @RequestMapping("/departmentList/{id}")
+    @ResponseBody
+    public WebResult<DepartmentVO> getDepartmentList(@PathVariable("id")long id) {
+        WebResult<DepartmentVO> result = new WebResult<>();
+        try {
+            List list = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/getDepartmentList/" + id, List.class);
+            result.setList(list);
+//            result.setCount(pageInfo.getTotal());
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    @RequestMapping("/toAddDepartment/{id}")
+    public String toAddDepartment(@PathVariable("id")long hospitalId,Model model) {
+        model.addAttribute("hospitalId",hospitalId);
+        return "/department/department-add";
+    }
+    @RequestMapping(value = "/addDepartment",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> addDepartment(@RequestBody DepartmentDTO departmentDTO) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<DepartmentDTO> httpEntity = new HttpEntity<DepartmentDTO>(departmentDTO, headers);
+            restTemplate.postForEntity(webPathConfiguration.getDoctorUrl()+"/addDepartment", httpEntity,null);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    @RequestMapping("/toEditDepartment/{id}")
+    public String toEditDepartment(@PathVariable("id")long deptId,Model model) {
+        model.addAttribute("deptId",deptId);
+
+        return "/department/department-edit";
+    }
+
+    /**
+     * 去编辑科室
+     * @param id
+     * @param model
+     * @return
+     */
+    @RequestMapping("/getDepartment/{id}")
+    public String getDepartment(@PathVariable("id")long id,Model model) {
+        try {
+            DepartmentDTO department = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/getDepartment/" + id, DepartmentDTO.class);
+            model.addAttribute("dept",department.getDepartment());
+            List<DeptDictDept> deptDictDeptsList = department.getDeptDictDepts();
+            if (!CollectionUtils.isEmpty(deptDictDeptsList)) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (DeptDictDept ddd:deptDictDeptsList){
+                    stringBuilder.append(ddd.getDictDepartmentId()+",");
+                }
+                List deptDictDepts = restTemplate.getForObject(webPathConfiguration.getSystemUrl()+"/dictDepartmentListByIds/" + stringBuilder.substring(0,stringBuilder.length()-1).toString(), List.class);
+//                List<DictDepartment> dictDeptList = Arrays.asList(deptDictDepts);
+                model.addAttribute("dictDepts",JSON.toJSONString(deptDictDepts));
+            }
+        } catch (RestClientException e) {
+//            result.setCode("500");
+            e.printStackTrace();
+            logger.error("fail to get department info ,error:{}",e);
+        }
+        return "/department/department-edit";
+    }
+
+    /**
+     * 科室分类页面
+     * @param model
+     * @param id
+     * @return
+     */
+    @RequestMapping("/toDeptCategory/{deptId}")
+    public String toDeptCategory(Model model,@PathVariable("deptId")String id) {
+        //TODO 科室 code
+        List list = restTemplate.getForObject(webPathConfiguration.getSystemUrl()+"/levelOneDepts/query", List.class);
+        model.addAttribute("list",list);
+        model.addAttribute("id",id);
+        return "/department/dept-category";
+    }
+
+    /**
+     * 科室分类
+     * @param deptCateArr
+     * @return
+     */
+    @RequestMapping(value = "/deptCategory/add",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> addDeptCategory(@RequestParam("deptCateArr") String deptCateArr) {
+        WebResult<String> result = new WebResult<>();
+        List<DeptDictDept> deptDictDepts = JSON.parseArray(deptCateArr, DeptDictDept.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<List<DeptDictDept>> httpEntity = new HttpEntity<>(deptDictDepts, headers);
+        try {
+            restTemplate.postForEntity(webPathConfiguration.getDoctorUrl()+"/",httpEntity,Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+ /**
+     * 删除科室分类
+     * @param
+     * @return
+     */
+    @RequestMapping(value = "/deptCat/delete/{catId}/{deptId}")
+    @ResponseBody
+    public WebResult<String> deleteDeptCategory(@PathVariable("catId")long catId,@PathVariable("deptId")long deptId) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.delete(webPathConfiguration.getDoctorUrl()+"/deptCat/delete");
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+    @RequestMapping(value = "/editDepartment",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> editDepartment(@RequestBody DepartmentDTO department) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<DepartmentDTO> httpEntity = new HttpEntity<DepartmentDTO>(department, headers);
+            restTemplate.put(webPathConfiguration.getDoctorUrl()+"/updateDepartment", httpEntity);
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    /**
+     *
+     * @param deptId
+     * @param model
+     * @return
+     */
+    @RequestMapping("/toDiseaseDept/{id}")
+    public String toDiseaseDept(@PathVariable("id")long deptId,Model model) {
+        model.addAttribute("id",deptId);
+
+        //TODO 查询科室分类和疾病总数
+        DeptCategoryVO categoryVO = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/category/dept/"+deptId, DeptCategoryVO.class);
+        model.addAttribute("vo",categoryVO);
+        return "/department/disease-department";
+    }
+
+    @RequestMapping("/toDiseaseList/{deptId}")
+    public String toDiseaseList(@PathVariable("deptId")long id,Model model) {
+        model.addAttribute("id",id);
+        return "/department/disease-list";
+    }
+
+    @RequestMapping(value = "/diseaseList",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<DeptDiseaseVO> selectDiseaseList( DiseaseQuery diseaseQuery) {
+        WebResult<DeptDiseaseVO> result = new WebResult<>();
+        try {
+            Page pageInfo = restTemplate.getForObject(webPathConfiguration.getSystemUrl()+"/disease/page?pageIndex={pageIndex}&pageSize={pageSize}&name={name}", Page.class, diseaseQuery.getPageIndex(), diseaseQuery.getPageSize(), diseaseQuery.getName());
+            List diseaseList = pageInfo.getResult();
+            if (diseaseQuery.getDoctorId()!=null){
+                DoctorDiseaseQuery doctorDiseaseQuery=new DoctorDiseaseQuery();
+                doctorDiseaseQuery.setDoctorId(diseaseQuery.getDoctorId());
+                doctorDiseaseQuery.setPageSize(500);
+                doctorDiseaseQuery.setPageIndex(1);
+                PageInfo diseaseAddedList = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/addedDisease/query?queryStr={queryStr}", PageInfo.class, JSON.toJSONString(doctorDiseaseQuery));
+                List addedList = diseaseAddedList.getList();
+                if (!CollectionUtils.isEmpty(diseaseList) && !CollectionUtils.isEmpty(addedList)){
+
+                    for (Object obj:diseaseList){
+                        Map<String,Object> dictDisease= (Map<String, Object>) obj;
+                        for (Object o:addedList){
+                            Map<String,Object>  deptDiseaseVO= (Map<String, Object>) o;
+                            if (dictDisease.get("id").equals(deptDiseaseVO.get("diseaseId"))){
+
+                                dictDisease.put("flag",true);
+                            }
+                        }
+                    }
+                }
+            }
+            if (diseaseQuery.getId()!=null){
+                PageInfo diseaseAddList = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/departDiseaseList?query={query}", PageInfo.class, JSON.toJSONString(diseaseQuery));
+                List addedList = diseaseAddList.getList();
+                if (!CollectionUtils.isEmpty(diseaseList) && !CollectionUtils.isEmpty(addedList)){
+
+                    for (Object obj:diseaseList){
+                        Map<String,Object> dictDisease= (Map<String, Object>) obj;
+                        for (Object o:addedList){
+                            Map<String,Object>  deptDiseaseVO= (Map<String, Object>) o;
+                            if (dictDisease.get("id").equals(deptDiseaseVO.get("diseaseId"))){
+
+                                dictDisease.put("flag",true);
+                            }
+                        }
+                    }
+                }
+            }
+            result.setCount(pageInfo.getTotalRecord());
+            result.setList(pageInfo.getResult());
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+
+        return result;
+    }
+
+    @RequestMapping("/toDiseaseAddList/{deptId}")
+    public String toDiseaseAddList(@PathVariable("deptId")long deptId,Model model) {
+        model.addAttribute("id",deptId);
+        return "/department/disease-added";
+    }
+
+    /**
+     * 科室已添加疾病列表
+     * @param diseaseQuery
+     * @return
+     */
+    @RequestMapping(value = "/diseaseAddList",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<DeptDiseaseVO> getDiseaseAddListPage( DiseaseQuery diseaseQuery) {
+        WebResult<DeptDiseaseVO> result = new WebResult<>();
+        //TODO
+        try {
+            PageInfo pageInfo = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/departDiseaseList?query={query}", PageInfo.class, JSON.toJSONString(diseaseQuery));
+            result.setList(pageInfo.getList());
+            result.setCount(pageInfo.getTotal());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+
+        return result;
+    }
+
+    /**
+     * 给科室添加疾病
+     * @param diseaseId
+     * @param deptId
+     * @return
+     */
+    @RequestMapping("/addDisease2Dept/{diseaseId}/{deptId}")
+    @ResponseBody
+    public WebResult<String> addDisease2Dept(@PathVariable("diseaseId")long diseaseId,@PathVariable("deptId")long deptId) {
+        WebResult<String> result = new WebResult<>();
+        DeptDisease deptDisease = new DeptDisease();
+        deptDisease.setDepartmentId(deptId);
+        deptDisease.setDiseaseId(diseaseId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<DeptDisease> httpEntity = new HttpEntity<DeptDisease>(deptDisease, headers);
+        try {
+            ResponseEntity<AppResult> responseEntity = restTemplate.postForEntity(webPathConfiguration.getDoctorUrl()+"/addDisease2Dept", httpEntity, AppResult.class);
+            result.setCode(responseEntity.getBody().getStatus().getCode());
+            result.setMsg(responseEntity.getBody().getStatus().getMessage());
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    /**
+     * 删除科室下的疾病
+     * @param id
+     * @return
+     */
+    @RequestMapping("/deptDisease/delete/{id}")
+    @ResponseBody
+    public WebResult<String> deleteDeptDisease(@PathVariable("id")long id) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.delete(webPathConfiguration.getDoctorUrl()+"/deptDisease/delete/"+id);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 查看科室
+     * @param deptId
+     * @return
+     */
+    @RequestMapping("/dept-coop/get/{id}")
+    @ResponseBody
+    public WebResult<DepartmentVO> getDeptCoopInfo(@PathVariable("id")long deptId){
+        WebResult<DepartmentVO> result = new WebResult<>();
+        try {
+            DepartmentVO departmentVO = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/getDepartRelateInfo/" + deptId, DepartmentVO.class);
+            try {
+//                String path="/Users/localadmin/Desktop/";
+                String path="/testRelease/qrCode/";
+
+                String content="{type:3,id:"+deptId+",extra:''}";
+                File file = new File(path + "department.jpeg");
+                QrCodeCreateUtil.createQrCode(new FileOutputStream(
+                            file), JSON.toJSONString(content), 300, "JPEG");
+//                QrCodeCreateUtil.createQrCode(new FileOutputStream(new File("/Users/localadmin/Desktop/qrcode.jpeg")),"WE1231238239128sASDASDSADSDWEWWREWRERWSDFDFSDSDF123123123123213123",300,"JPEG");
+
+                FileInputStream fis = new FileInputStream(file);
+                StorePath storePath = storageClient.uploadFile(fis, file.length(), "JPEG", null);
+                departmentVO.setQrCode(storePath.getFullPath());
+                result.setEntity(departmentVO);
+            } catch (FileNotFoundException e) {
+                logger.error("fail to upload department qrCode,error:{}",e);
+//                result.setCode("500");
+            }catch (Exception e) {
+                logger.error("fail to generate department qrCode,error:{}",e);
+
+            }
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    @RequestMapping("/to-dept-coop/get/{id}")
+    public String toDeptCoopInfo(@PathVariable("id")long deptId,Model model){
+        model.addAttribute("id",deptId);
+        return "/department/department-relate-info";
+
+    }
+
+    @RequestMapping("/toDeptDoctors/{deptId}")
+    public String toDeptDoctorList(@PathVariable("deptId")long id,Model model){
+        model.addAttribute("id",id);
+        return "/department/department-doctor-list";
+    }
+
+    /**
+     * 科室下的医生列表
+     * @param id
+     * @return
+     */
+    @RequestMapping(value = "/deptDoctors/get/{id}")
+    @ResponseBody
+    public WebResult<DoctorVO> queryDeptDoctorList(@PathVariable("id")long id){
+        WebResult<DoctorVO> result = new WebResult<>();
+        try {
+            List list = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/deptDoctors/get/" + id, List.class);
+            result.setList(list);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+
+    }
+
+    /**
+     * 更新科室服务设置
+     * @param id
+     * @param isFree
+     * @return
+     */
+    @RequestMapping("/deptServiceState/update")
+    @ResponseBody
+    public WebResult<String> updateDeptServiceState(@RequestParam long id, @RequestParam byte isFree, HttpServletRequest request) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            restTemplate.patchForObject(webPathConfiguration.getDoctorUrl()+"/deptServiceState/update/"+id+'/'+isFree+"/"+ WebUtils.getCurrUserName(request), null, Integer.class);
+
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 添加就诊须知
+     * @param id
+     * @param notice
+     * @return
+     */
+    @RequestMapping("/deptNotice/update")
+    @ResponseBody
+    public WebResult<String> updateDeptNotice(@RequestParam long id,@RequestParam String notice) {
+        WebResult<String> result = new WebResult<>();
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Department department = new Department();
+            department.setId(id);
+            department.setNotice(notice);
+            HttpEntity<Department> httpEntity = new HttpEntity<>(department, headers);
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            restTemplate.patchForObject(webPathConfiguration.getDoctorUrl()+"//deptNotice/update", httpEntity, Integer.class);
+
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    /**
+     * 关联科室和医生
+     * @param deptDoctorArr
+     * @return
+     */
+    @RequestMapping(value = "/deptDoctor/add",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<String> addDeptDoctor(@RequestParam("deptDoctorArr") String deptDoctorArr) {
+        WebResult<String> result = new WebResult<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        List<DeptDoctor> deptDoctorList = JSON.parseArray(deptDoctorArr, DeptDoctor.class);
+        HttpEntity<List<DeptDoctor>> httpEntity = new HttpEntity<>(deptDoctorList, headers);
+        try {
+            ResponseEntity<Integer> responseEntity = restTemplate.postForEntity(webPathConfiguration.getDoctorUrl()+"/relateDepartWithDoctor", httpEntity, Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+
+    @RequestMapping("/oneKey/add/{deptId}")
+    @ResponseBody
+    public WebResult<String> addOneKeyDisease(@PathVariable("deptId")long id){
+        WebResult<String> result = new WebResult<>();
+        try {
+            restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/oneKeys/add/"+id,Integer.class);
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+        return result;
+    }
+}

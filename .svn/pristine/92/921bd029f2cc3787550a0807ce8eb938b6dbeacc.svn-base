@@ -1,0 +1,428 @@
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%
+	String contextPath = request.getContextPath();
+	String imgUrl=(String) request.getAttribute("imgUrl");
+
+%>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>医略用户详情</title>
+	<link rel="stylesheet" href="<%=contextPath%>/static/plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="<%=contextPath%>/static/css/main.css" />
+	<link rel="stylesheet" href="<%=contextPath%>/static/css/global.css" />
+</head>
+<body>
+	<div class="layui-whole">
+		<blockquote class="layui-elem-quote">当前位置-->用户详情</blockquote>
+		<blockquote class="layui-elem-quote">
+			<a href="javascript:history.back(-1);" style="float: left" id="back" class="layui-btn layui-btn-normal">返回</a>
+			<a href="javascript:location.href=location.href;" style="float: right" id="refresh" class="layui-btn layui-btn-normal">刷新</a>
+		</blockquote>
+			<div class="layui-whole-con" style="padding-top: 30px;">
+			<input type="hidden" value="${id}" id="doctorId" />
+			<div class="layui-tab" style="margin: 0;">
+				<ul class="layui-tab-title">
+					<li class="layui-this">基本信息</li>
+					<li lay-filter="ext" id="extTab">扩展信息</li>
+				</ul>
+				<div class="layui-tab-content">
+					<div id="basicDiv" class="layui-form layui-tab-item layui-show">
+						<%--基本信息--%>
+						<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>基础信息</h2>
+						<div >
+							<table class="layui-table" style="margin:0 0 10px 0;">
+								<tbody id="basic">
+
+								</tbody>
+							</table>
+						</div>
+
+						<%--黑名单列表--%>
+						<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>黑名单列表</h2>
+						<div class="layui-form layui-tab-item layui-show">
+							<table class="layui-table" style="margin:0 0 10px 0;">
+								<thead>
+								<tr>
+									<th>序号</th>
+									<th>原因</th>
+									<th>操作类型</th>
+									<th>处理人</th>
+									<th>操作时间</th>
+								</tr>
+								</thead>
+								<tbody id="blacklist">
+								<%--<tr>
+									<td>1</td>
+									<td>哈哈哈哈哈</td>
+									<td>添加</td>
+									<td>谁呀</td>
+									<td>2017-08-09</td>
+								</tr>--%>
+								</tbody>
+							</table>
+						</div>
+
+						<%--意见反馈列表--%>
+						<h2 class="layui-h2-title"><i class="layui-icon">&#xe62d;</i>反馈列表</h2>
+						<div class="layui-form layui-tab-item layui-show">
+							<table class="layui-table" style="margin:0 0 10px 0;">
+								<thead>
+								<tr>
+									<th>序号</th>
+									<th>反馈内容</th>
+									<th>反馈时间</th>
+								</tr>
+								</thead>
+								<tbody id="feedback">
+								<%--<tr>
+									<td>1</td>
+									<td>哈哈哈哈哈</td>
+									<td>2017-08-09</td>
+								</tr>--%>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div style="display: none" id="extDiv" class="layui-form layui-tab-item" >
+						<div lay-filter="ext" >
+							<table class="layui-table" style="margin:0 0 10px 0;">
+								<tbody id="extInfo">
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="layui-fixed-btn">
+			<div class="layui-form-item">
+				<button id="resetPwd" type="button"  class="layui-btn layui-btn-normal">重置密码</button>
+				<button  id="addBlack" type="button" class="layui-btn layui-btn-normal">加入黑名单</button>
+			</div>
+		</div>
+	</div>
+
+<%--重置密码弹出层		--%>
+<div style="display: none" id="pwdDiv">
+	<form id="form1" class="layui-form layui-form-mid">
+		<div class="layui-form-item">
+			<label class="layui-form-label layui-form-label-md">新密码</label>
+			<div class="layui-input-inline" style="width: 275px;">
+				<input type="text" name="password"  autocomplete="off" class="layui-input">
+			</div>
+		</div>
+		<button lay-filter="edit" lay-submit  style="display: none;"></button>
+	</form>
+</div>
+
+<%--加入黑名单弹出层		--%>
+<div style="display: none" id="blackDiv">
+	<form id="form2" class="layui-form layui-form-mid">
+		<div class="layui-form-item">
+			<label class="layui-form-label layui-form-label-sm">原因</label>
+			<div class="layui-input-inline">
+				<textarea  name="reason" lay-verify="contact"  autocomplete="off" class="layui-textarea" style="width: 340px;height: 100px;resize: none;"></textarea>
+			</div>
+		</div>
+		<button lay-filter="addBlack" lay-submit style="display: none;"></button>
+	</form>
+</div>
+
+	<!--模板-->
+	<script type="text/html" id="basicTpl">
+			<tr>
+				<th >用户名</th>
+				<td>{{d.username}}</td>
+				<th >姓名</th>
+				<td>{{d.realname}}</td>
+				<th>生日</th>
+				<td>{{d.birthday}}</td>
+				<th rowspan="3" width="40px">头像</th>
+				<td rowspan="3"><div>
+					{{# if(d.headImage!=null && d.headImage.length>0){}}
+					<img src="{{d.headImage}}" style="width: 100px;height: 100px;">
+					{{# } }}
+				</div>
+				</td>
+			</tr>
+			<tr>
+				<th >年龄</th>
+				<td>{{# if(d.birthday!=null){}}
+					{{# var fn=function(){
+						var now=new Date();
+						var birthday=d.birthday;
+						var birthday=d.birthday.replace("/-/g","/");
+						var result=now.getFullYear()-new Date(birthday).getFullYear()+1;
+						return result?result:"";
+					}; }}}
+					{{fn()}}
+				</td>
+				<th >性别</th>
+				<td>{{# if(d.sex==1){}}
+						男
+					{{# } else if(d.sex==2){ }}
+					   女
+					{{#}}}</td>
+				<th >手机号</th>
+				<td>{{d.mobileNumber}}</td>
+			</tr>
+			<tr>
+				<th >邮箱</th>
+				<td>{{d.email}}</td>
+				<th >注册时间</th>
+				<td>{{d.createTime}}</td>
+				<th >黑名单用户</th>
+				<td>{{d.isBlacklist==1?'否':'是'}}</td>
+			</tr>
+</script>
+
+<script type="text/html" id="blacklistTpl">
+	{{# if(d.blacklistList!=null && d.blacklistList.length>0){ }}
+	{{# layui.each(d.blacklistList, function(index, item){ }}
+	<tr>
+		<td>{{index+1}}</td>
+		<td>{{ item.reason }}</td>
+		<td>{{ item.type==1?'添加':'移除' }}</td>
+		<td>{{ item.operator }}</td>
+		<td>{{item.createTime}}</td>
+	</tr>
+	{{# }); } }}
+</script>
+<script type="text/html" id="feedbackTpl">
+	{{# if(d.feedbackList!=null && d.feedbackList.length>0){ }}
+
+	{{# layui.each(d.feedbackList, function(index, item){ }}
+	<tr>
+		<td>{{index+1}}</td>
+		<td>{{ item.content }}</td>
+		<td>{{ item.createTime }}</td>
+	</tr>
+	{{# }); } }}
+</script>
+<script type="text/html" id="extTpl">
+	<tr>
+		<th >医院名称</th>
+		<td>{{d.hospital}}</td>
+		<th >科室名称</th>
+		<td colspan="3">{{d.department}}</td>
+	</tr>
+
+	<tr>
+		<th>职称</th>
+		<td>{{d.title}}</td>
+		<th>职务</th>
+		<td>{{d.duty}}</td>
+		<th>学历</th>
+		<td>{{d.education}}</td>
+	</tr>
+	<tr aria-rowspan="3">
+		<th>擅长</th>
+		<td colspan="5">{{d.strongpoint}}</td>
+	</tr>
+	<tr aria-rowspan="3">
+		<th>简介</th>
+		<td colspan="5">{{d.summary}}</td>
+	</tr>
+
+</script>
+	<script type="text/javascript" src="<%=contextPath%>/static/plugins/layui/layui.js"></script>
+<script type='text/javascript'>
+        /*layui.use(['laytpl','element','layer','form'],function () {
+            var laytpl = layui.laytpl,element=layui.element(),layer=layui.layer;
+			$.ajax({
+				url:'/doctor/doctorinfo/'+$("#doctorId").val(),
+				type:'get',
+				dataType:'json',
+				success:function (data) {
+					data = data.entity;
+					laytpl($('#basicTpl').html()).render(data,function (html) {
+					    $('#basic').html(html);
+					    if (data.isBlacklist=2){
+                            $('#addBlack').prop("style","display:none");
+						}
+                    });
+                	laytpl($('#blacklistTpl').html()).render(data,function (html) {
+					    $('#blacklist').html(html);
+                    });
+                	laytpl($('#feedbackTpl').html()).render(data,function (html) {
+					    $('#feedback').html(html);
+                    });
+                },
+				error:function (data) {
+                }
+			});*/
+
+	layui.use(['laytpl','element','layer','form','jquery'],function () {
+		var form = layui.form(),
+			laytpl = layui.laytpl,
+			element=layui.element(),
+			layer=layui.layer,$ = layui.jquery;
+
+		if(!window.parent.setPermissions($,"doctor:list:modifyPwd")){
+			$('#resetPwd').css('display','none');
+		}
+		if(!window.parent.setPermissions($,"doctor:list:addBlack")){
+			$('#addBlack').css('display','none');
+		}
+
+		//自定义验证规则
+		form.verify({
+			contact: function(value){
+				if(value.length < 5){
+					return '内容请输入至少5个字符';
+				}
+				if(value.length > 300){
+					return '内容不能多于300个字符';
+				}
+			}
+		});
+
+		$.ajax({
+			url:'<%=contextPath%>/doctor/doctorinfo/'+$("#doctorId").val(),
+			type:'get',
+			dataType:'json',
+			success:function (data) {
+				data = data.entity;
+				laytpl($('#basicTpl').html()).render(data,function (html) {
+					$('#basic').html(html);
+					if (data.isBlacklist==2){
+						$('#addBlack').prop("style","display:none");
+					}
+				});
+				laytpl($('#blacklistTpl').html()).render(data,function (html) {
+					$('#blacklist').html(html);
+				});
+				laytpl($('#feedbackTpl').html()).render(data,function (html) {
+					$('#feedback').html(html);
+				});
+			},
+			error:function (data) {
+			}
+		});
+
+		$('#extTab').on('click',function () {
+				$("#basicDiv").prop("style","display:none").removeClass("layui-show");
+				$("#extDiv").removeAttr("style").addClass("layui-show");
+				$.ajax({
+					url:'<%=contextPath%>/doctor/extDoctorinfo/'+$("#doctorId").val(),
+					type:'get',
+					dataType:'json',
+					success:function (data) {
+						data = data.entity;
+						layui.laytpl($('#extTpl').html()).render(data,function (html) {
+							$('#extInfo').html(html);
+						});
+                        if (data.isBlacklist==2){
+                            $('#addBlack').prop("style","display:none");
+                        }
+					},
+					error:function (data) {
+					}
+				});
+            });
+
+		$('#resetPwd').on('click',function () {
+			layer.open({
+				type:1,
+				title:'重置密码',
+				content:$('#pwdDiv'),
+				area:['350px','200px'],
+				shadeClone:true,
+				btn:['保存','取消'],
+				yes:function (index,layero) {
+					$('#form1').find('button[lay-filter=edit]').click();
+				},
+				success:function (layero,index) {
+					var form=layui.form();
+					form.render();
+					form.on('submit(edit)',function (data) {
+						console.log(data.field);
+						$.ajax({
+							type:'post',
+							url:'<%=contextPath%>/doctor/updatePassword',
+							data: JSON.stringify({
+								id:$("#doctorId").val(),
+	//                                        password:$('#form1').find("input[name=password]").val()
+								password:data.field.password
+							})
+							,
+							dataType:'json',
+							contentType:'application/json',
+							success:function (result) {
+								if (result.code=200)
+									layer.msg("重置密码成功");
+								else
+									layer.msg("重置密码失败")
+							},
+							error:function (result) {
+								layer.msg("重置密码失败");
+							}
+						});
+					});
+
+				},
+				cancel:function (index,layero) {
+					layer.close(index);
+				}
+			});
+		});
+
+		$('#addBlack').on('click',function () {
+			layer.open({
+					type:1,
+					title:'加入黑名单',
+					content:$('#blackDiv'),
+					area:['400px','250px'],
+					shadeClone:true,
+					btn:['保存','取消'],
+					yes:function (index,layero) {
+						$('#form2').find('button[lay-filter=addBlack]').click();
+					},
+					success:function (layero,index) {
+				var form=layui.form();
+				form.render();
+				form.on('submit(addBlack)',function (data) {
+				    $('#blackDiv').find("button").prop("style","display:none");
+						var sysBlacklist = {
+							userId: $("#doctorId").val(),
+							reason: data.field.reason,
+							userType: 2
+						};
+					$.ajax({
+						type: 'post',
+						url: '<%=contextPath%>/doctor/blacklist/operate',
+						data: JSON.stringify({
+							sysBlacklist: sysBlacklist,
+							operateTpye: 'add'
+						}),
+						dataType: 'json',
+						contentType: 'application/json',
+						success: function (data) {
+							if (data.code == 200) {
+								layer.close(index);
+								layer.msg("添加黑名单成功");
+								location.reload(true);
+							}
+							else
+								layer.msg("添加黑名单失败")
+						},
+						error: function (data) {
+							layer.msg("添加黑名单失败");
+						}
+					});
+				});
+					},
+					cancel:function (index,layero) {
+						layer.close(index);
+					}
+				});
+		});
+	});
+</script>
+</body>
+
+</html>

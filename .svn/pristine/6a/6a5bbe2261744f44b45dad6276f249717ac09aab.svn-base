@@ -1,0 +1,61 @@
+server.port= 8060
+server.tomcat.uri-encoding=UTF-8
+
+spring.application.name=manage-web
+spring.mvc.view.prefix=/WEB-INF/views/
+spring.mvc.view.suffix=.jsp
+spring.jackson.date-format=yyyy-MM-dd
+spring.jackson.time-zone=GMT+8
+
+spring.profiles.active=test
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.type=com.alibaba.druid.pool.DruidDataSource
+spring.http.multipart.max-file-size=10MB
+spring.http.multipart.max-request-size=10MB
+#jdbc:mysql://172.30.0.217:3306/xjk
+
+logging.config=classpath:logback-spring.xml
+#logging.path=/root/health/logs
+logging.level.root=info
+#dev 注册中心
+#eureka.client.service-url.defaultZone=http://172.30.0.218:8000/eureka/
+
+#client:
+#service-url:
+#defaultZone: http://10.117.130.217
+# :8761/eureka/
+#       defaultZone: http://localhost:8760/eureka/ # ,http://peer2:8761/eureka/
+eureka.instance.prefer-ip-address=true
+eureka.instance.lease-expiration-duration-in-seconds=30
+eureka.instance.lease-renewal-interval-in-seconds=30
+
+eureka.instance.instance-id=${spring.application.name}:${spring.cloud.client.ipAddress}:${server.port}
+#ribbon.eager-load.enabled=true
+#ribbon.eager-load.clients=doctor,business,dict,order
+#ribbon.eager-load.clients=doctor,business,dict,order,patient,newhealth
+#ribbon.eager-load.clients=doctor,business,dict,order,patient,newhealth
+#prefer-ip-address: true
+
+mybatis.mapper-locations=classpath:mapper/*.xml
+mybatis.configLocation= classpath:mybatis.xml
+
+#prefer-ip-address: true
+#---
+#spring:
+#  profile: user1
+#server:
+#    port: 8000
+#---
+#spring:
+#     profile: user2
+#server:
+#     port: 8101
+#SMS
+#constant.fdfs.url=http://114.113.117.245:8796/
+constant.fdfs.url=https://test.cis95132.com:8000/
+fdfs.soTimeout=1500
+fdfs.connect-timeout=600
+fdfs.thumbImage.height=150
+fdfs.thumbImage.width=150
+fdfs.filesize=3145728
+

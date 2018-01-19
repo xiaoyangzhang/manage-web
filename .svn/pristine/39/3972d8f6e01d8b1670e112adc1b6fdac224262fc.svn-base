@@ -1,0 +1,87 @@
+package com.yhyt.health.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import com.alibaba.fastjson.JSON;
+import com.github.pagehelper.PageInfo;
+import com.github.tobato.fastdfs.service.FastFileStorageClient;
+import com.yhyt.health.configuration.WebPathConfiguration;
+import com.yhyt.health.model.query.DiseaseQuery;
+import com.yhyt.health.model.query.DoctorDiseaseQuery;
+import com.yhyt.health.model.query.ObstetricsQuery;
+import com.yhyt.health.result.WebResult;
+import com.yhyt.health.util.Page;
+
+/**
+ * Created by localadmin on 17/12/4.
+ */
+@Controller
+@RequestMapping("/register")
+public class RegisterController {
+
+
+    private static Logger logger = LoggerFactory.getLogger(DepartmentController.class);
+
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private FastFileStorageClient storageClient;
+    @Autowired
+    private WebPathConfiguration webPathConfiguration;
+	
+	
+    /*产科患者列表*/
+    @RequestMapping("/toRegisterList")
+    public String toRegisterList(){
+        return "/register/register-list";
+    }
+
+    
+    @RequestMapping(value = "/getObstetricsList",method = RequestMethod.POST)
+    @ResponseBody
+    public WebResult<Object> selectDiseaseList( ObstetricsQuery obstetricsQuery) {
+        WebResult<Object> result = new WebResult<>();
+        try {
+//        	 Page pageInfo = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/disease/page?pageIndex={pageIndex}&pageSize={pageSize}&name={name}", Page.class, obstetricsQuery.getPageIndex(), obstetricsQuery.getPageSize(), obstetricsQuery.getName());
+//                 List diseaseList = pageInfo.getResult();
+                 ObstetricsQuery doctorDiseaseQuery=new ObstetricsQuery();
+                doctorDiseaseQuery.setBirthTimeEnd(obstetricsQuery.getBirthTimeEnd());
+                doctorDiseaseQuery.setBirthTimeStart(obstetricsQuery.getBirthTimeStart());
+                doctorDiseaseQuery.setUsername(obstetricsQuery.getUsername());
+                doctorDiseaseQuery.setRealname(obstetricsQuery.getRealname());
+                doctorDiseaseQuery.setIsDangerous(obstetricsQuery.getIsDangerous());
+                doctorDiseaseQuery.setPageSize(500);
+                doctorDiseaseQuery.setPageIndex(1);
+                PageInfo diseaseAddedList = restTemplate.getForObject(webPathConfiguration.getDoctorUrl()+"/getObstetricsList/query?queryStr={queryStr}", PageInfo.class, JSON.toJSONString(doctorDiseaseQuery));
+//                List addedList = diseaseAddedList.getList();
+            result.setCount(diseaseAddedList.getTotal());
+            result.setList(diseaseAddedList.getList());
+            return result;
+        } catch (RestClientException e) {
+            result.setCode("500");
+        }
+
+        return result;
+    }
+
+    /*产科患者详情*/
+    @RequestMapping("/toRegisterDetail")
+    public String toRegisterDetail(){
+        return "/register/register-details";
+    }
+
+}
+
+

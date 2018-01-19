@@ -1,0 +1,60 @@
+package com.yhyt.health.configuration;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConfigurationProperties(prefix = "url")
+public class PathConfiguration {
+
+    @Value("${url.doctorUrl}")
+    private String doctorUrl;
+    @Value("${url.systemUrl}")
+    private String systemUrl;
+    @Value("${url.gateWay}")
+    private String gateWay;
+    @Value("${url.patientUrl}")
+    private String patientUrl;
+    @Value("${url.newhealthUrl}")
+    private String newhealthUrl;
+    @Value("${url.qrCode}")
+    private String qrCode;
+
+    public String getQrCode() {
+        return qrCode;
+    }
+
+    public String getNewhealthUrl() {
+        return newhealthUrl;
+    }
+
+    public String getDoctorUrl() {
+        return doctorUrl;
+    }
+
+    public String getSystemUrl() {
+        return systemUrl;
+    }
+
+    public String getGateWay() {
+        return gateWay;
+    }
+
+    public String getPatientUrl() {
+        return patientUrl;
+    }
+
+    @Bean
+    public PathConfiguration getPathConfiguration(){
+        PathConfiguration pathConfiguration = new PathConfiguration();
+        pathConfiguration.doctorUrl=doctorUrl;
+        pathConfiguration.gateWay=gateWay;
+        pathConfiguration.patientUrl=patientUrl;
+        pathConfiguration.qrCode=qrCode;
+        pathConfiguration.systemUrl=systemUrl;
+        pathConfiguration.newhealthUrl=newhealthUrl;
+        return pathConfiguration;
+    }
+}
